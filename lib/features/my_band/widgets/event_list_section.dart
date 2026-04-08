@@ -51,17 +51,18 @@ class EventListSection extends StatelessWidget {
                     '${event.date.year}.${event.date.month.toString().padLeft(2, '0')}.${event.date.day.toString().padLeft(2, '0')}',
                   ),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getEventColor(event.type).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: _getEventColor(context, event.type).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: _getEventColor(context, event.type).withOpacity(0.1)),
                     ),
                     child: Text(
                       event.type.label,
                       style: TextStyle(
-                        color: _getEventColor(event.type),
+                        color: _getEventColor(context, event.type),
                         fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -73,14 +74,15 @@ class EventListSection extends StatelessWidget {
     );
   }
 
-  Color _getEventColor(EventType type) {
+  Color _getEventColor(BuildContext context, EventType type) {
+    // B&W theme + point color
     switch (type) {
       case EventType.practice:
-        return Colors.blue;
+        return Theme.of(context).colorScheme.primary;
       case EventType.performance:
-        return Colors.red;
+        return Theme.of(context).colorScheme.secondary;
       case EventType.other:
-        return Colors.green;
+        return Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
     }
   }
 }

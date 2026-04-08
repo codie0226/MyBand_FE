@@ -24,27 +24,41 @@ class ScaffoldWithNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _goBranch,
-        destinations: const [
-          NavigationDestination(
-            icon: FaIcon(FontAwesomeIcons.guitar),
-            label: '나의 밴드',
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
           ),
-          NavigationDestination(
-            icon: FaIcon(FontAwesomeIcons.message),
-            label: '채팅',
-          ),
-          NavigationDestination(
-            icon: FaIcon(FontAwesomeIcons.calendar),
-            label: '캘린더',
-          ),
-          NavigationDestination(
-            icon: FaIcon(FontAwesomeIcons.user),
-            label: '프로필',
-          ),
-        ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: navigationShell.currentIndex,
+          onTap: _goBranch,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.guitar, size: 20)),
+              label: '나의 밴드',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.solidMessage, size: 20)),
+              label: '채팅',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.calendar, size: 20)),
+              label: '캘린더',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.solidUser, size: 20)),
+              label: '프로필',
+            ),
+          ],
+        ),
       ),
     );
   }
