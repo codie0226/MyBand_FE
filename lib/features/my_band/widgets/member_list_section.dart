@@ -41,7 +41,7 @@ class MemberListSection extends StatelessWidget {
                   ),
                   Text(
                     member.instrument,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                 ],
               );
