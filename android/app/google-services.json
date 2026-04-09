@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "321441200947",
+    "project_id": "myband-490005",
+    "storage_bucket": "myband-490005.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:321441200947:android:dc1e66627393102dd39c46",
+        "android_client_info": {
+          "package_name": "com.codie0226.myband"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "321441200947-rtkasoflal78i4i9s6gnh7u1q78fgo6r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQBxQUxuGO-sUNr6by2BoIfcp3iG7pFz4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "321441200947-rtkasoflal78i4i9s6gnh7u1q78fgo6r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

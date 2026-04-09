@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'scaffold_with_nav_bar.dart';
+import '../../features/auth/providers/auth_provider.dart';
+import '../../features/auth/views/login_screen.dart';
 import '../../features/my_band/views/my_band_screen.dart';
 import '../../features/chat/views/chat_screen.dart';
 import '../../features/calendar/views/calendar_screen.dart';
@@ -14,11 +16,41 @@ final _sectionBNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'sectionBNav
 final _sectionCNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'sectionCNav');
 final _sectionDNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'sectionDNav');
 
+/// authProvider 상태 변화를 GoRouter에 전달하는 ChangeNotifier
+class _RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  _RouterNotifier(this._ref) {
+    _ref.listen<bool>(authProvider, (_, _) => notifyListeners());
+  }
+
+  String? redirect(BuildContext context, GoRouterState state) {
+    final isLoggedIn = _ref.read(authProvider);
+    final isOnLogin = state.matchedLocation == '/login';
+
+    if (!isLoggedIn && !isOnLogin) return '/login';
+    if (isLoggedIn && isOnLogin) return '/my_band';
+    return null;
+  }
+}
+
+final _routerNotifierProvider = Provider<_RouterNotifier>((ref) {
+  return _RouterNotifier(ref);
+});
+
 final goRouterProvider = Provider<GoRouter>((ref) {
+  final notifier = ref.watch(_routerNotifierProvider);
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/my_band',
+    refreshListenable: notifier,
+    redirect: notifier.redirect,
     routes: [
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
