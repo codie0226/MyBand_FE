@@ -6,6 +6,7 @@ import 'scaffold_with_nav_bar.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/views/login_screen.dart';
 import '../../features/my_band/views/my_band_screen.dart';
+import '../../features/my_band/views/add_event_screen.dart';
 import '../../features/chat/views/chat_screen.dart';
 import '../../features/calendar/views/calendar_screen.dart';
 import '../../features/profile/views/profile_screen.dart';
@@ -50,6 +51,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/add_event',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final dateParam = state.uri.queryParameters['date'];
+          final preselectedDate =
+              dateParam != null ? DateTime.tryParse(dateParam) : null;
+          return AddEventScreen(preselectedDate: preselectedDate);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

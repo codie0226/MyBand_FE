@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../my_band/models/band_models.dart';
 import '../../my_band/providers/band_provider.dart';
+import '../../my_band/widgets/setlist_item_card.dart';
 import '../../../core/theme/app_theme.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
@@ -227,7 +229,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                // TODO: 일정 추가 기능 구현 예정
+                final dateStr =
+                    _selectedDay!.toIso8601String().split('T').first;
+                context.push('/add_event?date=$dateStr');
               },
               icon: const Icon(Icons.add),
               label: const Text('새 일정 추가'),
@@ -332,10 +336,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: event.setlist.asMap().entries.map((entry) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Text('${entry.key + 1}. ${entry.value}'),
-                        );
+                        return SetlistItemCard(
+                            index: entry.key, item: entry.value);
                       }).toList(),
                     ),
                   ),

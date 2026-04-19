@@ -25,7 +25,7 @@ class MyBandScreen extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleLarge,
             onChanged: (Band? newValue) {
               if (newValue != null) {
-                ref.read(selectedBandProvider.notifier).updateBand(newValue);
+                ref.read(selectedBandIdProvider.notifier).select(newValue.id);
               }
             },
             items: bands.map<DropdownMenuItem<Band>>((Band band) {

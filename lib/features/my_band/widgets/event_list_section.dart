@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/band_models.dart';
 import 'event_detail_dialog.dart';
 
@@ -14,9 +16,29 @@ class EventListSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            '일정 모아보기',
-            style: Theme.of(context).textTheme.titleLarge,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '일정 모아보기',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              SizedBox(
+                height: 32,
+                width: 32,
+                child: IconButton(
+                  onPressed: () => context.push('/add_event'),
+                  icon: const Icon(Icons.add, size: 18),
+                  padding: EdgeInsets.zero,
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.surface,
+                    shape: const CircleBorder(
+                      side: BorderSide(color: AppColors.border),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
