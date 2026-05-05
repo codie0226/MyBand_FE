@@ -19,7 +19,7 @@ class BandInfoSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            band.description,
+            band.description ?? '',
             style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8)),
           ),
         ],

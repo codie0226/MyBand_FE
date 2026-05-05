@@ -31,35 +31,59 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final band = ref.watch(selectedBandProvider);
+    final bandAsync = ref.watch(selectedBandProvider);
 
-    final selectedEvents = _selectedDay != null
-        ? _getEventsForDay(_selectedDay!, band.events)
-        : <BandEvent>[];
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(band.name),
-        centerTitle: false,
+    return bandAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       ),
-      body: Column(
-        children: [
-          _buildCalendar(band),
-          const Divider(height: 1, thickness: 1),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              switchInCurve: Curves.easeOut,
-              switchOutCurve: Curves.easeIn,
-              child: _selectedDay == null
-                  ? _buildNoSelection(context)
-                  : _selectedEvent == null
-                      ? _buildEventList(context, selectedEvents)
-                      : _buildEventDetail(context, _selectedEvent!),
-            ),
+      error: (e, st) => Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 40),
+              const SizedBox(height: 12),
+              Text('불러오기 실패: $e'),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                onPressed: () => ref.invalidate(selectedBandProvider),
+                child: const Text('다시 시도'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
+      data: (band) {
+        final selectedEvents = _selectedDay != null
+            ? _getEventsForDay(_selectedDay!, band.events)
+            : <BandEvent>[];
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(band.name),
+            centerTitle: false,
+          ),
+          body: Column(
+            children: [
+              _buildCalendar(band),
+              const Divider(height: 1, thickness: 1),
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: _selectedDay == null
+                      ? _buildNoSelection(context)
+                      : _selectedEvent == null
+                          ? _buildEventList(context, selectedEvents)
+                          : _buildEventDetail(context, _selectedEvent!),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -209,7 +233,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Text(
-                          event.description,
+                          event.description ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -314,7 +338,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 8),
-                Text(event.description),
+                Text(event.description ?? ''),
                 if (hasSetlist && event.setlist.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   Text(

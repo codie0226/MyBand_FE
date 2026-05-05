@@ -32,7 +32,12 @@ class MemberListSection extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage(member.profileImageUrl),
+                    backgroundImage: member.profileImageUrl != null
+                        ? NetworkImage(member.profileImageUrl!)
+                        : null,
+                    child: member.profileImageUrl == null
+                        ? Text(member.name.isNotEmpty ? member.name[0] : '?')
+                        : null,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -40,7 +45,7 @@ class MemberListSection extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   Text(
-                    member.instrument,
+                    member.instrument ?? '-',
                     style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                 ],

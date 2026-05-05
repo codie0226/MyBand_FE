@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../models/band_models.dart';
+import '../data/event_repository.dart';
 import '../providers/band_provider.dart';
 import '../widgets/setlist_item_form.dart';
 
@@ -76,7 +77,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     }
   }
 
-  void _saveEvent() {
+  Future<void> _saveEvent() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedDate == null) {
@@ -86,19 +87,17 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       return;
     }
 
-    final band = ref.read(selectedBandProvider);
     final setlist = _selectedType != EventType.other
         ? _setlistItems
             .asMap()
             .entries
             .map((e) => e.value.toSetlistItem(e.key))
-            .where(
-                (item) => item.title.isNotEmpty && item.artist.isNotEmpty)
+            .where((item) => item.title.isNotEmpty && item.artist.isNotEmpty)
             .toList()
         : <SetlistItem>[];
 
     final newEvent = BandEvent(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: '',
       title: _titleController.text.trim(),
       date: _selectedDate!,
       type: _selectedType,
@@ -106,8 +105,18 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       setlist: setlist,
     );
 
-    ref.read(bandsProvider.notifier).addEvent(band.id, newEvent);
-    context.pop();
+    try {
+      final band = await ref.read(selectedBandProvider.future);
+      await ref.read(eventRepositoryProvider).createEvent(band.id, newEvent);
+      ref.invalidate(selectedBandProvider);
+      if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('일정 저장 실패: $e')),
+        );
+      }
+    }
   }
 
   @override

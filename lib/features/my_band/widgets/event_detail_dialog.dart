@@ -77,7 +77,7 @@ class EventDetailDialog extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 8),
-          Text(event.description),
+          Text(event.description ?? ''),
           if (hasSetlist && event.setlist.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text(
