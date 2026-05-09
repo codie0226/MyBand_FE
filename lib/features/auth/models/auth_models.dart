@@ -2,22 +2,28 @@
 class AuthUser {
   final String id;
   final String name;
+  final String? nickname;
   final String email;
   final String? profileImageUrl;
+  final bool onboardingCompleted;
 
   const AuthUser({
     required this.id,
     required this.name,
+    this.nickname,
     required this.email,
     this.profileImageUrl,
+    this.onboardingCompleted = false,
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       id: json['id'] as String,
       name: json['name'] as String,
+      nickname: json['nickname'] as String?,
       email: json['email'] as String,
       profileImageUrl: json['profileImageUrl'] as String?,
+      onboardingCompleted: (json['onboardingCompleted'] as bool?) ?? false,
     );
   }
 }
@@ -27,10 +33,7 @@ class LoginResponse {
   final String accessToken;
   final AuthUser user;
 
-  const LoginResponse({
-    required this.accessToken,
-    required this.user,
-  });
+  const LoginResponse({required this.accessToken, required this.user});
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
@@ -45,15 +48,19 @@ class UserProfile {
   final String id;
   final String email;
   final String name;
+  final String? nickname;
   final String? profileImageUrl;
   final String? instrument;
+  final bool onboardingCompleted;
 
   const UserProfile({
     required this.id,
     required this.email,
     required this.name,
+    this.nickname,
     this.profileImageUrl,
     this.instrument,
+    this.onboardingCompleted = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -61,8 +68,10 @@ class UserProfile {
       id: json['id'] as String,
       email: json['email'] as String,
       name: json['name'] as String,
+      nickname: json['nickname'] as String?,
       profileImageUrl: json['profileImageUrl'] as String?,
       instrument: json['instrument'] as String?,
+      onboardingCompleted: (json['onboardingCompleted'] as bool?) ?? false,
     );
   }
 }

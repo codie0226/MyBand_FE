@@ -68,7 +68,7 @@ class AttachmentMenu extends StatelessWidget {
             child: Center(
               child: FaIcon(
                 icon,
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                 size: 24,
               ),
             ),

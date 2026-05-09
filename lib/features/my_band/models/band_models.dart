@@ -97,8 +97,7 @@ class Member {
       email: (json['email'] as String?) ?? '',
       instrument: json['instrument'] as String?,
       profileImageUrl: json['profileImageUrl'] as String?,
-      role: BandMemberRole.fromWire(
-          (json['role'] as String?) ?? 'member'),
+      role: BandMemberRole.fromWire((json['role'] as String?) ?? 'member'),
     );
   }
 }
@@ -178,7 +177,10 @@ class BandEvent {
 class Band {
   final String id;
   final String name;
+  final String? genre;
   final String? description;
+  final String? iconUrl;
+  final String? inviteCode;
   final int memberCount;
   final List<Member> members;
   final List<BandEvent> events;
@@ -186,7 +188,10 @@ class Band {
   const Band({
     required this.id,
     required this.name,
+    this.genre,
     this.description,
+    this.iconUrl,
+    this.inviteCode,
     this.memberCount = 0,
     this.members = const [],
     this.events = const [],
@@ -197,7 +202,10 @@ class Band {
     return Band(
       id: json['id'] as String,
       name: json['name'] as String,
+      genre: json['genre'] as String?,
       description: json['description'] as String?,
+      iconUrl: json['iconUrl'] as String?,
+      inviteCode: json['inviteCode'] as String?,
       memberCount: (json['memberCount'] as num?)?.toInt() ?? 0,
     );
   }
@@ -205,7 +213,10 @@ class Band {
   Band copyWith({
     String? id,
     String? name,
+    String? genre,
     String? description,
+    String? iconUrl,
+    String? inviteCode,
     int? memberCount,
     List<Member>? members,
     List<BandEvent>? events,
@@ -213,7 +224,10 @@ class Band {
     return Band(
       id: id ?? this.id,
       name: name ?? this.name,
+      genre: genre ?? this.genre,
       description: description ?? this.description,
+      iconUrl: iconUrl ?? this.iconUrl,
+      inviteCode: inviteCode ?? this.inviteCode,
       memberCount: memberCount ?? this.memberCount,
       members: members ?? this.members,
       events: events ?? this.events,

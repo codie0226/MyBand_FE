@@ -18,6 +18,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _nameController = TextEditingController();
   final _instrumentController = TextEditingController();
   bool _isSaving = false;
+  bool _isEditing = false;
 
   static const _instrumentOptions = [
     'Vocal',
@@ -54,6 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             instrument: _instrumentController.text.trim(),
           );
       if (mounted) {
+        setState(() => _isEditing = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('저장되었습니다.')),
         );
@@ -108,29 +110,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('프로필'),
+        title: Text(_isEditing ? '프로필 변경' : '프로필'),
         centerTitle: false,
+        leading: _isEditing
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _isEditing = false;
+                    final profile = ref.read(userProfileProvider).value;
+                    if (profile != null) {
+                      _nameController.text = profile.name;
+                      _instrumentController.text = profile.instrument ?? '';
+                    }
+                  });
+                },
+              )
+            : null,
         actions: [
-          _isSaving
-              ? const Padding(
-                  padding: EdgeInsets.all(14),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : TextButton(
-                  onPressed: _save,
-                  child: Text(
-                    '저장',
-                    style: TextStyle(
-                      color: AppColors.point,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
+          if (_isEditing)
+            _isSaving
+                ? const Padding(
+                    padding: EdgeInsets.all(14),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : TextButton(
+                    onPressed: _save,
+                    child: const Text(
+                      '저장',
+                      style: TextStyle(
+                        color: AppColors.point,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
-                ),
         ],
       ),
       body: profileAsync.when(
@@ -157,6 +175,96 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildContent(UserProfile profile) {
+    if (_isEditing) {
+      return _buildEditForm(profile);
+    }
+    return _buildReadOnlyProfile(profile);
+  }
+
+  Widget _buildReadOnlyProfile(UserProfile profile) {
+    final theme = Theme.of(context);
+    final initial = profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?';
+
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 40),
+          CircleAvatar(
+            radius: 60,
+            backgroundColor: AppColors.point.withValues(alpha: 0.1),
+            backgroundImage: profile.profileImageUrl != null
+                ? NetworkImage(profile.profileImageUrl!)
+                : null,
+            child: profile.profileImageUrl == null
+                ? Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.point,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 24),
+          Text(
+            profile.name,
+            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            profile.instrument?.isNotEmpty == true ? profile.instrument! : '포지션 미정',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: AppColors.point,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _isEditing = true;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.point,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('프로필 변경', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _handleLogout,
+              icon: const Icon(Icons.logout, size: 18),
+              label: const Text('로그아웃'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.secondaryText,
+                side: const BorderSide(color: AppColors.border),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditForm(UserProfile profile) {
     final theme = Theme.of(context);
     final initial = profile.name.isNotEmpty
         ? profile.name[0].toUpperCase()
@@ -298,27 +406,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       },
                     ),
                   ),
-
                   const SizedBox(height: 48),
-
-                  // 로그아웃 버튼
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _handleLogout,
-                      icon: const Icon(Icons.logout, size: 18),
-                      label: const Text('로그아웃'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.secondaryText,
-                        side: const BorderSide(color: AppColors.border),
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
