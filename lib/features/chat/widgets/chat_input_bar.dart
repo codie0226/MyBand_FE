@@ -42,9 +42,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(color: theme.dividerColor, width: 1),
-        ),
+        border: Border(top: BorderSide(color: theme.dividerColor, width: 1)),
       ),
       child: SafeArea(
         child: Row(
@@ -54,7 +52,7 @@ class _ChatInputBarState extends State<ChatInputBar> {
               onPressed: _showAttachmentMenu,
               icon: FaIcon(
                 FontAwesomeIcons.plus,
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 size: 20,
               ),
             ),
@@ -74,9 +72,16 @@ class _ChatInputBarState extends State<ChatInputBar> {
                     keyboardType: TextInputType.multiline,
                     decoration: InputDecoration(
                       hintText: '메시지 입력...',
-                      hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.4)),
+                      hintStyle: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.4,
+                        ),
+                      ),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ),

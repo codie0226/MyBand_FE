@@ -5,31 +5,61 @@ import 'package:go_router/go_router.dart';
 import 'scaffold_with_nav_bar.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/views/login_screen.dart';
+import '../../features/onboarding/views/onboarding_screen.dart';
+import '../../features/profile/providers/user_provider.dart';
 import '../../features/my_band/views/my_band_screen.dart';
+import '../../features/my_band/views/add_event_screen.dart';
 import '../../features/chat/views/chat_screen.dart';
 import '../../features/calendar/views/calendar_screen.dart';
 import '../../features/profile/views/profile_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _sectionANavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'sectionANav');
-final _sectionBNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'sectionBNav');
-final _sectionCNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'sectionCNav');
-final _sectionDNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'sectionDNav');
+final _sectionANavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'sectionANav',
+);
+final _sectionBNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'sectionBNav',
+);
+final _sectionCNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'sectionCNav',
+);
+final _sectionDNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'sectionDNav',
+);
 
 /// authProvider 상태 변화를 GoRouter에 전달하는 ChangeNotifier
 class _RouterNotifier extends ChangeNotifier {
   final Ref _ref;
 
   _RouterNotifier(this._ref) {
-    _ref.listen<bool>(authProvider, (_, _) => notifyListeners());
+    _ref.listen<bool>(authProvider, (_, next) {
+      if (next) {
+        _ref.invalidate(userProfileProvider);
+        _ref.read(userProfileProvider.future).ignore();
+      }
+      notifyListeners();
+    });
+    _ref.listen(userProfileProvider, (_, _) => notifyListeners());
   }
 
   String? redirect(BuildContext context, GoRouterState state) {
     final isLoggedIn = _ref.read(authProvider);
     final isOnLogin = state.matchedLocation == '/login';
+    final isOnOnboarding = state.matchedLocation == '/onboarding';
 
     if (!isLoggedIn && !isOnLogin) return '/login';
-    if (isLoggedIn && isOnLogin) return '/my_band';
+    if (!isLoggedIn) return null;
+
+    final profile = _ref.read(userProfileProvider).value;
+    if (profile?.onboardingCompleted == false && !isOnOnboarding) {
+      return '/onboarding';
+    }
+    if (profile?.onboardingCompleted == true && isOnOnboarding) {
+      return '/my_band';
+    }
+    if (isOnLogin) {
+      return profile?.onboardingCompleted == false ? '/onboarding' : '/my_band';
+    }
     return null;
   }
 }
@@ -47,9 +77,22 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     refreshListenable: notifier,
     redirect: notifier.redirect,
     routes: [
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        path: '/onboarding',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/add_event',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final dateParam = state.uri.queryParameters['date'];
+          final preselectedDate = dateParam != null
+              ? DateTime.tryParse(dateParam)
+              : null;
+          return AddEventScreen(preselectedDate: preselectedDate);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

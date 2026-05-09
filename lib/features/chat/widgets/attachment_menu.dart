@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 class AttachmentMenu extends StatelessWidget {
   const AttachmentMenu({super.key});
@@ -16,8 +17,9 @@ class AttachmentMenu extends StatelessWidget {
             icon: FontAwesomeIcons.solidCalendarPlus,
             label: '일정 생성',
             onTap: () {
+              final router = GoRouter.of(context);
               Navigator.pop(context);
-              // TODO: Implement event creation
+              router.push('/add_event');
             },
           ),
           _buildAttachmentIcon(
@@ -66,7 +68,7 @@ class AttachmentMenu extends StatelessWidget {
             child: Center(
               child: FaIcon(
                 icon,
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                 size: 24,
               ),
             ),

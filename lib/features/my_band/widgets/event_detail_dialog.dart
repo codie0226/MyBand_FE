@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/band_models.dart';
+import 'setlist_item_card.dart';
 
 class EventDetailDialog extends StatelessWidget {
   final BandEvent event;
@@ -76,7 +77,7 @@ class EventDetailDialog extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 8),
-          Text(event.description),
+          Text(event.description ?? ''),
           if (hasSetlist && event.setlist.isNotEmpty) ...[
             const SizedBox(height: 24),
             Text(
@@ -96,10 +97,8 @@ class EventDetailDialog extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: event.setlist.asMap().entries.map((entry) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text('${entry.key + 1}. ${entry.value}'),
-                  );
+                  return SetlistItemCard(
+                      index: entry.key, item: entry.value);
                 }).toList(),
               ),
             ),
