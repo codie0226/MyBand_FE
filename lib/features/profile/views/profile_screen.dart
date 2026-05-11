@@ -87,7 +87,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Text(
               '로그아웃',
               style: TextStyle(
-                color: Colors.red.shade400,
+                color: AppColors.semanticError,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -105,7 +105,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(userProfileProvider);
 
-    // 프로필 로드 완료 시 컨트롤러에 값 세팅
     profileAsync.whenData(_populateControllers);
 
     return Scaffold(
@@ -143,7 +142,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: const Text(
                       '저장',
                       style: TextStyle(
-                        color: AppColors.point,
+                        color: AppColors.ink,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       ),
@@ -152,8 +151,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
       body: profileAsync.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -175,9 +173,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildContent(UserProfile profile) {
-    if (_isEditing) {
-      return _buildEditForm(profile);
-    }
+    if (_isEditing) return _buildEditForm(profile);
     return _buildReadOnlyProfile(profile);
   }
 
@@ -193,7 +189,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 40),
           CircleAvatar(
             radius: 60,
-            backgroundColor: AppColors.point.withValues(alpha: 0.1),
+            backgroundColor: AppColors.surfaceStrong,
             backgroundImage: profile.profileImageUrl != null
                 ? NetworkImage(profile.profileImageUrl!)
                 : null,
@@ -202,8 +198,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     initial,
                     style: const TextStyle(
                       fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.point,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
                     ),
                   )
                 : null,
@@ -213,49 +209,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             profile.name,
             style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 8),
-          Text(
-            profile.instrument?.isNotEmpty == true ? profile.instrument! : '포지션 미정',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: AppColors.point,
-              fontWeight: FontWeight.w600,
+          const SizedBox(height: 6),
+          if (profile.instrument?.isNotEmpty == true)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceStrong,
+                borderRadius: BorderRadius.circular(9999),
+              ),
+              child: Text(
+                profile.instrument!,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            )
+          else
+            Text(
+              '포지션 미정',
+              style: theme.textTheme.bodySmall,
             ),
-          ),
           const Spacer(),
           SizedBox(
             width: double.infinity,
+            height: 48,
             child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _isEditing = true;
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.point,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('프로필 변경', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              onPressed: () => setState(() => _isEditing = true),
+              child: const Text('프로필 변경'),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
+            height: 48,
             child: OutlinedButton.icon(
               onPressed: _handleLogout,
-              icon: const Icon(Icons.logout, size: 18),
+              icon: const Icon(Icons.logout, size: 16),
               label: const Text('로그아웃'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.secondaryText,
-                side: const BorderSide(color: AppColors.border),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -266,9 +258,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildEditForm(UserProfile profile) {
     final theme = Theme.of(context);
-    final initial = profile.name.isNotEmpty
-        ? profile.name[0].toUpperCase()
-        : '?';
+    final initial = profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?';
 
     return SingleChildScrollView(
       child: Form(
@@ -276,18 +266,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // ── 헤더: 아바타 + 이름 + 이메일 ──────────────────────
+            // 헤더: 아바타 + 이름 + 이메일
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                  vertical: 36, horizontal: 24),
-              color: AppColors.surface,
+              padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
+              color: AppColors.canvasSoft,
               child: Column(
                 children: [
                   CircleAvatar(
                     radius: 48,
-                    backgroundColor:
-                        AppColors.point.withValues(alpha: 0.1),
+                    backgroundColor: AppColors.surfaceStrong,
                     backgroundImage: profile.profileImageUrl != null
                         ? NetworkImage(profile.profileImageUrl!)
                         : null,
@@ -296,8 +284,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             initial,
                             style: const TextStyle(
                               fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.point,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
                             ),
                           )
                         : null,
@@ -305,100 +293,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: 16),
                   Text(
                     profile.name,
-                    style: theme.textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     profile.email,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.secondaryText,
-                    ),
+                    style: theme.textTheme.bodySmall,
                   ),
                 ],
               ),
             ),
 
-            // ── 편집 폼 ──────────────────────────────────────────
+            // 편집 폼
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 닉네임
-                  Text(
-                    '닉네임',
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
+                  Text('닉네임', style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _nameController,
-                    decoration: _inputDecoration('닉네임을 입력하세요'),
-                    validator: (v) =>
-                        v == null || v.trim().isEmpty
-                            ? '닉네임을 입력해주세요'
-                            : null,
+                    decoration: const InputDecoration(hintText: '닉네임을 입력하세요'),
+                    validator: (v) => v == null || v.trim().isEmpty ? '닉네임을 입력해주세요' : null,
                   ),
-
                   const SizedBox(height: 24),
-
-                  // 밴드 파트
-                  Text(
-                    '밴드 파트',
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
+                  Text('밴드 파트', style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _instrumentController,
-                    decoration: _inputDecoration('예: Guitar, Vocal'),
+                    decoration: const InputDecoration(hintText: '예: Guitar, Vocal'),
                   ),
                   const SizedBox(height: 10),
-
-                  // 빠른 선택 Chip
                   SizedBox(
                     height: 36,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: _instrumentOptions.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(width: 8),
+                      separatorBuilder: (_, _) => const SizedBox(width: 8),
                       itemBuilder: (context, index) {
                         final label = _instrumentOptions[index];
-                        final isSelected = _instrumentController
-                                .text
-                                .trim() ==
-                            label;
+                        final isSelected = _instrumentController.text.trim() == label;
                         return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _instrumentController.text = label;
-                            });
-                          },
+                          onTap: () => setState(() => _instrumentController.text = label),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? AppColors.point
-                                  : AppColors.surface,
-                              borderRadius: BorderRadius.circular(20),
+                              color: isSelected ? AppColors.primary : AppColors.surfaceStrong,
+                              borderRadius: BorderRadius.circular(9999),
                               border: Border.all(
-                                color: isSelected
-                                    ? AppColors.point
-                                    : AppColors.border,
+                                color: isSelected ? AppColors.primary : AppColors.hairlineStrong,
                               ),
                             ),
                             child: Text(
                               label,
                               style: TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppColors.secondaryText,
+                                fontWeight: FontWeight.w500,
+                                color: isSelected ? AppColors.onPrimary : AppColors.body,
                               ),
                             ),
                           ),
@@ -413,31 +366,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.secondaryText),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.point, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red),
-      ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }

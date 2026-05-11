@@ -23,30 +23,27 @@ class SetlistItemCard extends StatelessWidget {
             children: [
               Text(
                 '${index + 1}. ',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
               Expanded(
                 child: Text(
                   '${item.title} - ${item.artist}',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               if (item.key != null)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.point.withValues(alpha: 0.08),
+                    color: AppColors.surfaceStrong,
                     borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: AppColors.hairlineStrong),
                   ),
                   child: Text(
                     item.key!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.point,
+                    style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: 11,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
@@ -57,17 +54,15 @@ class SetlistItemCard extends StatelessWidget {
             Row(
               children: [
                 const SizedBox(width: 16),
-                Icon(Icons.music_note,
-                    size: 14,
-                    color: AppColors.secondaryText.withValues(alpha: 0.6)),
+                const Icon(Icons.music_note, size: 14, color: AppColors.muted),
                 const SizedBox(width: 4),
                 Expanded(
                   child: SelectableText(
                     item.sheetMusicUrl!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.point,
                       fontSize: 12,
                       decoration: TextDecoration.underline,
+                      color: AppColors.body,
                     ),
                   ),
                 ),
@@ -80,18 +75,15 @@ class SetlistItemCard extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 16, top: 2),
                   child: Row(
                     children: [
-                      Icon(Icons.link,
-                          size: 14,
-                          color:
-                              AppColors.secondaryText.withValues(alpha: 0.6)),
+                      const Icon(Icons.link, size: 14, color: AppColors.muted),
                       const SizedBox(width: 4),
                       Expanded(
                         child: SelectableText(
                           ref,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.point,
                             fontSize: 12,
                             decoration: TextDecoration.underline,
+                            color: AppColors.body,
                           ),
                         ),
                       ),

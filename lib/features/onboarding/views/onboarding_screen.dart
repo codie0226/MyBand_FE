@@ -144,9 +144,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   const SizedBox(height: 8),
                   Text(
                     profile.email,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.secondaryText,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 28),
                   _SectionLabel('닉네임'),
@@ -154,7 +152,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   TextFormField(
                     controller: _nicknameController,
                     textInputAction: TextInputAction.next,
-                    decoration: _inputDecoration('예: 홍길동, 베이스길동'),
+                    decoration: const InputDecoration(hintText: '예: 홍길동, 베이스길동'),
                     validator: (value) => value == null || value.trim().isEmpty
                         ? '닉네임을 입력해주세요.'
                         : null,
@@ -171,7 +169,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   TextFormField(
                     controller: _instrumentController,
                     textInputAction: TextInputAction.next,
-                    decoration: _inputDecoration('목록에 없으면 직접 입력'),
+                    decoration: const InputDecoration(hintText: '목록에 없으면 직접 입력'),
                     validator: (value) => value == null || value.trim().isEmpty
                         ? '악기 또는 파트를 입력해주세요.'
                         : null,
@@ -194,6 +192,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     onSelectionChanged: (selected) {
                       setState(() => _mode = selected.first);
                     },
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.selected)) return AppColors.primary;
+                        return AppColors.surfaceCard;
+                      }),
+                      foregroundColor: WidgetStateProperty.resolveWith((states) {
+                        if (states.contains(WidgetState.selected)) return AppColors.onPrimary;
+                        return AppColors.body;
+                      }),
+                    ),
                   ),
                   const SizedBox(height: 18),
                   if (_mode == _BandEntryMode.inviteCode)
@@ -201,23 +209,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   else
                     _buildCreateBandFields(),
                   const SizedBox(height: 32),
-                  FilledButton(
-                    onPressed: _isSaving ? null : _submit,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.point,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _submit,
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.onPrimary,
+                              ),
+                            )
+                          : const Text('MyBand 시작하기'),
                     ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('MyBand 시작하기'),
                   ),
                 ],
               ),
@@ -236,12 +243,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       onSelected: (_) {
         setState(() => _instrumentController.text = label);
       },
-      selectedColor: AppColors.point,
-      labelStyle: TextStyle(
-        color: selected ? Colors.white : AppColors.primaryText,
-        fontWeight: FontWeight.w600,
-      ),
-      side: const BorderSide(color: AppColors.border),
     );
   }
 
@@ -254,7 +255,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         TextFormField(
           controller: _inviteCodeController,
           textCapitalization: TextCapitalization.characters,
-          decoration: _inputDecoration('예: AB12CD34'),
+          decoration: const InputDecoration(hintText: '예: AB12CD34'),
           validator: (value) {
             if (_mode != _BandEntryMode.inviteCode) return null;
             return value == null || value.trim().isEmpty
@@ -273,26 +274,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         _SectionLabel('새 밴드 정보'),
         const SizedBox(height: 12),
         InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           onTap: _pickBandIcon,
           child: Container(
             width: 88,
             height: 88,
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              color: AppColors.surfaceStrong,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.hairlineStrong),
             ),
             child: _bandIconFile == null
-                ? const Icon(Icons.add_photo_alternate_outlined, size: 30)
-                : const Icon(Icons.image, size: 30, color: AppColors.point),
+                ? const Icon(Icons.add_photo_alternate_outlined, size: 28, color: AppColors.muted)
+                : const Icon(Icons.image, size: 28, color: AppColors.ink),
           ),
         ),
         const SizedBox(height: 14),
         TextFormField(
           controller: _bandNameController,
           textInputAction: TextInputAction.next,
-          decoration: _inputDecoration('밴드명'),
+          decoration: const InputDecoration(hintText: '밴드명'),
           validator: (value) {
             if (_mode != _BandEntryMode.createBand) return null;
             return value == null || value.trim().isEmpty
@@ -304,35 +305,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         TextFormField(
           controller: _bandGenreController,
           textInputAction: TextInputAction.next,
-          decoration: _inputDecoration('장르 예: 인디 록, 재즈, 팝'),
+          decoration: const InputDecoration(hintText: '장르 예: 인디 록, 재즈, 팝'),
         ),
         const SizedBox(height: 12),
         TextFormField(
           controller: _bandDescriptionController,
           minLines: 3,
           maxLines: 5,
-          decoration: _inputDecoration('밴드 설명'),
+          decoration: const InputDecoration(hintText: '밴드 설명'),
         ),
       ],
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.point, width: 1.5),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }
@@ -346,9 +328,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(
-        context,
-      ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+      style: Theme.of(context).textTheme.titleSmall,
     );
   }
 }

@@ -10,6 +10,7 @@ class BandInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -19,12 +20,12 @@ class BandInfoSection extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: AppColors.surface,
+                backgroundColor: AppColors.surfaceStrong,
                 backgroundImage: band.iconUrl != null
                     ? NetworkImage(band.iconUrl!)
                     : null,
                 child: band.iconUrl == null
-                    ? const Icon(Icons.music_note, color: AppColors.point)
+                    ? const Icon(Icons.music_note, color: AppColors.ink, size: 20)
                     : null,
               ),
               const SizedBox(width: 12),
@@ -34,46 +35,43 @@ class BandInfoSection extends StatelessWidget {
                   children: [
                     Text(
                       band.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     if (band.genre?.isNotEmpty == true)
-                      Text(
-                        band.genre!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
+                      Text(band.genre!, style: theme.textTheme.bodySmall),
                   ],
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('밴드 소개', style: Theme.of(context).textTheme.titleLarge),
+          Text('밴드 소개', style: theme.textTheme.titleLarge),
           const SizedBox(height: 12),
           Text(
             band.description?.isNotEmpty == true
                 ? band.description!
                 : '아직 밴드 소개가 없습니다.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.6,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.8),
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.body, height: 1.6),
           ),
           if (band.inviteCode?.isNotEmpty == true) ...[
             const SizedBox(height: 16),
-            Text('초대 코드', style: Theme.of(context).textTheme.titleSmall),
+            Text('초대 코드', style: theme.textTheme.titleSmall),
             const SizedBox(height: 8),
-            SelectableText(
-              band.inviteCode!,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-                color: AppColors.point,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceStrong,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.hairlineStrong),
+              ),
+              child: SelectableText(
+                band.inviteCode!,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2,
+                  color: AppColors.ink,
+                ),
               ),
             ),
           ],

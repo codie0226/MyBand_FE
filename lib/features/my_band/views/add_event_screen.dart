@@ -7,6 +7,7 @@ import '../models/band_models.dart';
 import '../data/event_repository.dart';
 import '../providers/band_provider.dart';
 import '../widgets/setlist_item_form.dart';
+import '../../profile/data/user_repository.dart';
 
 class AddEventScreen extends ConsumerStatefulWidget {
   final DateTime? preselectedDate;
@@ -25,6 +26,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   DateTime? _selectedDate;
   EventType _selectedType = EventType.practice;
   final List<SetlistItemFormData> _setlistItems = [];
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -42,11 +44,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     super.dispose();
   }
 
-  void _addSetlistItem() {
-    setState(() {
-      _setlistItems.add(SetlistItemFormData());
-    });
-  }
+  void _addSetlistItem() => setState(() => _setlistItems.add(SetlistItemFormData()));
 
   void _removeSetlistItem(int index) {
     setState(() {
@@ -61,29 +59,40 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2024),
       lastDate: DateTime(2028),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: AppColors.point,
-                ),
-          ),
-          child: child!,
-        );
-      },
     );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
-    }
+    if (picked != null) setState(() => _selectedDate = picked);
   }
 
   Future<void> _saveEvent() async {
     if (!_formKey.currentState!.validate()) return;
-
     if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('날짜를 선택해주세요')),
       );
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    // 악보 파일 업로드 (파일이 선택된 항목만)
+    try {
+      final repo = ref.read(userRepositoryProvider);
+      for (final item in _setlistItems) {
+        final file = item.sheetMusicFile;
+        if (file != null && file.bytes != null) {
+          item.uploadedSheetUrl = await repo.uploadImage(
+            bytes: file.bytes!,
+            filename: file.name,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('악보 업로드 실패: $e')),
+        );
+      }
       return;
     }
 
@@ -116,6 +125,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
           SnackBar(content: Text('일정 저장 실패: $e')),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -128,17 +139,23 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
         title: const Text('일정 추가'),
         centerTitle: false,
         actions: [
-          TextButton(
-            onPressed: _saveEvent,
-            child: Text(
-              '저장',
-              style: TextStyle(
-                color: AppColors.point,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
+          if (_isUploading)
+            const Padding(
+              padding: EdgeInsets.all(14),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: _saveEvent,
+              child: const Text(
+                '저장',
+                style: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700, fontSize: 15),
               ),
             ),
-          ),
         ],
       ),
       body: Form(
@@ -171,30 +188,25 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '일정 날짜',
-          style:
-              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
+        Text('일정 날짜', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         InkWell(
           onTap: _pickDate,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              color: AppColors.surfaceCard,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.hairlineStrong),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.calendar_today_outlined,
-                  size: 18,
-                  color: _selectedDate != null
-                      ? AppColors.primaryText
-                      : AppColors.secondaryText,
+                  size: 16,
+                  color: _selectedDate != null ? AppColors.ink : AppColors.muted,
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -202,9 +214,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                       ? '${_selectedDate!.year}년 ${_selectedDate!.month}월 ${_selectedDate!.day}일'
                       : '날짜를 선택하세요',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: _selectedDate != null
-                        ? AppColors.primaryText
-                        : AppColors.secondaryText,
+                    color: _selectedDate != null ? AppColors.ink : AppColors.muted,
                   ),
                 ),
               ],
@@ -219,43 +229,28 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '일정 종류',
-          style:
-              theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
+        Text('일정 종류', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: SegmentedButton<EventType>(
             segments: EventType.values.map((type) {
-              return ButtonSegment<EventType>(
-                value: type,
-                label: Text(type.label),
-              );
+              return ButtonSegment<EventType>(value: type, label: Text(type.label));
             }).toList(),
             selected: {_selectedType},
-            onSelectionChanged: (selected) {
-              setState(() => _selectedType = selected.first);
-            },
+            onSelectionChanged: (selected) => setState(() => _selectedType = selected.first),
             style: ButtonStyle(
               backgroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return AppColors.primary;
-                }
-                return AppColors.background;
+                if (states.contains(WidgetState.selected)) return AppColors.primary;
+                return AppColors.surfaceCard;
               }),
               foregroundColor: WidgetStateProperty.resolveWith((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return Colors.white;
-                }
-                return AppColors.primaryText;
+                if (states.contains(WidgetState.selected)) return AppColors.onPrimary;
+                return AppColors.ink;
               }),
-              side: WidgetStateProperty.all(
-                const BorderSide(color: AppColors.border),
-              ),
+              side: WidgetStateProperty.all(const BorderSide(color: AppColors.hairlineStrong)),
               shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ),
@@ -270,7 +265,6 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       decoration: const InputDecoration(
         labelText: '일정 제목',
         hintText: '예: 정기 합주, 클럽 공연',
-        border: OutlineInputBorder(),
       ),
       validator: (v) => v == null || v.trim().isEmpty ? '제목을 입력해주세요' : null,
     );
@@ -282,7 +276,6 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       decoration: const InputDecoration(
         labelText: '일정 내용',
         hintText: '일정에 대한 상세 내용을 입력하세요',
-        border: OutlineInputBorder(),
         alignLabelWithHint: true,
       ),
       maxLines: 3,
@@ -295,11 +288,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       children: [
         Row(
           children: [
-            Text(
-              '셋리스트',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
+            Text('셋리스트', style: theme.textTheme.titleSmall),
             const SizedBox(width: 8),
             SizedBox(
               height: 28,
@@ -309,9 +298,10 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                 icon: const Icon(Icons.add, size: 16),
                 padding: EdgeInsets.zero,
                 style: IconButton.styleFrom(
-                  backgroundColor: AppColors.surface,
-                  shape: const CircleBorder(
-                    side: BorderSide(color: AppColors.border),
+                  backgroundColor: AppColors.surfaceStrong,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(color: AppColors.hairlineStrong),
                   ),
                 ),
               ),
@@ -324,22 +314,15 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 24),
             decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
+              color: AppColors.canvasSoft,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.hairlineStrong),
             ),
             child: Column(
               children: [
-                Icon(Icons.music_note_outlined,
-                    size: 28,
-                    color: AppColors.secondaryText.withValues(alpha: 0.4)),
+                const Icon(Icons.music_note_outlined, size: 28, color: AppColors.muted),
                 const SizedBox(height: 8),
-                Text(
-                  '+ 버튼을 눌러 곡을 추가하세요',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.secondaryText,
-                  ),
-                ),
+                Text('+ 버튼을 눌러 곡을 추가하세요', style: theme.textTheme.bodySmall),
               ],
             ),
           ),

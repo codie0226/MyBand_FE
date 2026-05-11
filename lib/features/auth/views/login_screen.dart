@@ -33,6 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -43,15 +44,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               // 앱 아이콘 + 이름
               const FaIcon(
                 FontAwesomeIcons.guitar,
-                size: 52,
-                color: AppColors.point,
+                size: 48,
+                color: AppColors.ink,
               ),
               const SizedBox(height: 20),
               Text(
                 'MyBand',
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primaryText,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
                       letterSpacing: -1.5,
                     ),
               ),
@@ -59,7 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Text(
                 '우리 밴드의 모든 것을 한 곳에서',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryText,
+                      color: AppColors.body,
                     ),
               ),
               const Spacer(flex: 4),
@@ -73,7 +74,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 '로그인하면 서비스 이용약관 및 개인정보처리방침에\n동의하는 것으로 간주됩니다.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.secondaryText.withValues(alpha: 0.7),
+                      color: AppColors.muted,
                       height: 1.6,
                     ),
               ),
@@ -99,23 +100,23 @@ class _GoogleSignInButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: 48,
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: AppColors.border, width: 1.5),
+          backgroundColor: AppColors.surfaceCard,
+          side: const BorderSide(color: AppColors.hairlineStrong, width: 1),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
         ),
         child: isLoading
             ? const SizedBox(
-                width: 20,
-                height: 20,
+                width: 18,
+                height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.secondaryText,
+                  color: AppColors.muted,
                 ),
               )
             : Row(
@@ -123,15 +124,15 @@ class _GoogleSignInButton extends StatelessWidget {
                 children: [
                   const FaIcon(
                     FontAwesomeIcons.google,
-                    size: 18,
-                    color: AppColors.primaryText,
+                    size: 16,
+                    color: AppColors.ink,
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'Google로 계속하기',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryText,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.ink,
                         ),
                   ),
                 ],

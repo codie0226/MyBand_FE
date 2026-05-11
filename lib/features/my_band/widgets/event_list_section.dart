@@ -19,10 +19,7 @@ class EventListSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '일정 모아보기',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text('일정 모아보기', style: Theme.of(context).textTheme.titleLarge),
               SizedBox(
                 height: 32,
                 width: 32,
@@ -31,9 +28,10 @@ class EventListSection extends StatelessWidget {
                   icon: const Icon(Icons.add, size: 18),
                   padding: EdgeInsets.zero,
                   style: IconButton.styleFrom(
-                    backgroundColor: AppColors.surface,
-                    shape: const CircleBorder(
-                      side: BorderSide(color: AppColors.border),
+                    backgroundColor: AppColors.surfaceStrong,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: AppColors.hairlineStrong),
                     ),
                   ),
                 ),
@@ -43,9 +41,9 @@ class EventListSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         if (events.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text('등록된 일정이 없습니다.', style: TextStyle(color: Colors.grey)),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text('등록된 일정이 없습니다.', style: Theme.of(context).textTheme.bodySmall),
           )
         else
           ListView.separated(
@@ -53,38 +51,35 @@ class EventListSection extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             itemCount: events.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 8),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final event = events[index];
+              final typeLabel = event.type.label;
               return Card(
-                elevation: 0,
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                ),
                 child: ListTile(
                   onTap: () => EventDetailDialog.show(context, event),
                   title: Text(
                     event.title,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Text(
                     '${event.date.year}.${event.date.month.toString().padLeft(2, '0')}.${event.date.day.toString().padLeft(2, '0')}',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                   trailing: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getEventColor(context, event.type).withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: _getEventColor(context, event.type).withOpacity(0.1)),
+                      color: AppColors.surfaceStrong,
+                      borderRadius: BorderRadius.circular(9999),
+                      border: Border.all(color: AppColors.hairlineStrong),
                     ),
                     child: Text(
-                      event.type.label,
-                      style: TextStyle(
-                        color: _getEventColor(context, event.type),
-                        fontSize: 12,
+                      typeLabel,
+                      style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
@@ -94,17 +89,5 @@ class EventListSection extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  Color _getEventColor(BuildContext context, EventType type) {
-    // B&W theme + point color
-    switch (type) {
-      case EventType.practice:
-        return Theme.of(context).colorScheme.primary;
-      case EventType.performance:
-        return Theme.of(context).colorScheme.secondary;
-      case EventType.other:
-        return Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
-    }
   }
 }

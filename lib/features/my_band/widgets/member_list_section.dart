@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 import '../models/band_models.dart';
 
 class MemberListSection extends StatelessWidget {
@@ -46,7 +47,7 @@ class MemberListSection extends StatelessWidget {
                   ),
                   Text(
                     member.instrument ?? '-',
-                    style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w500),
+                    style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                 ],
               );

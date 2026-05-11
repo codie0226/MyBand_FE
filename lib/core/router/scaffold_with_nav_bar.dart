@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:my_band/core/theme/app_theme.dart';
 
 class ScaffoldWithNavBar extends StatelessWidget {
   const ScaffoldWithNavBar({
@@ -13,49 +14,96 @@ class ScaffoldWithNavBar extends StatelessWidget {
   void _goBranch(int index) {
     navigationShell.goBranch(
       index,
-      // A common pattern when using bottom navigation bars is to support
-      // navigating to the initial location when tapping the item that is
-      // already active.
       initialLocation: index == navigationShell.currentIndex,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final current = navigationShell.currentIndex;
+
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
+          color: AppColors.canvas,
           border: Border(
-            top: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+            top: BorderSide(color: AppColors.hairline, width: 1),
           ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: navigationShell.currentIndex,
-          onTap: _goBranch,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.guitar, size: 20)),
-              label: '나의 밴드',
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 56,
+            child: Row(
+              children: [
+                _NavItem(
+                  icon: FontAwesomeIcons.guitar,
+                  label: '나의 밴드',
+                  selected: current == 0,
+                  onTap: () => _goBranch(0),
+                ),
+                _NavItem(
+                  icon: FontAwesomeIcons.solidMessage,
+                  label: '채팅',
+                  selected: current == 1,
+                  onTap: () => _goBranch(1),
+                ),
+                _NavItem(
+                  icon: FontAwesomeIcons.calendar,
+                  label: '캘린더',
+                  selected: current == 2,
+                  onTap: () => _goBranch(2),
+                ),
+                _NavItem(
+                  icon: FontAwesomeIcons.solidUser,
+                  label: '프로필',
+                  selected: current == 3,
+                  onTap: () => _goBranch(3),
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.solidMessage, size: 20)),
-              label: '채팅',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.calendar, size: 20)),
-              label: '캘린더',
-            ),
-            BottomNavigationBarItem(
-              icon: Padding(padding: EdgeInsets.only(bottom: 4), child: FaIcon(FontAwesomeIcons.solidUser, size: 20)),
-              label: '프로필',
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final FaIconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? AppColors.ink : AppColors.muted;
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            FaIcon(icon, size: 18, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+                letterSpacing: 0,
+              ),
             ),
           ],
         ),
