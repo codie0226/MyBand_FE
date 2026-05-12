@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/network/attachment_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../my_band/providers/band_provider.dart';
 import '../../profile/data/user_repository.dart';
@@ -69,14 +70,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     setState(() => _isSaving = true);
     try {
-      final repo = ref.read(userRepositoryProvider);
       String? iconUrl;
       final icon = _bandIconFile;
       if (_mode == _BandEntryMode.createBand && icon != null) {
-        iconUrl = await repo.uploadImage(
-          bytes: await icon.readAsBytes(),
-          filename: icon.name,
-        );
+        iconUrl = await ref
+            .read(attachmentRepositoryProvider)
+            .upload(
+              bytes: await icon.readAsBytes(),
+              filename: icon.name,
+              type: AttachmentUploadType.image,
+            );
       }
 
       await ref
@@ -152,7 +155,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   TextFormField(
                     controller: _nicknameController,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(hintText: '예: 홍길동, 베이스길동'),
+                    decoration: const InputDecoration(
+                      hintText: '예: 홍길동, 베이스길동',
+                    ),
                     validator: (value) => value == null || value.trim().isEmpty
                         ? '닉네임을 입력해주세요.'
                         : null,
@@ -169,7 +174,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   TextFormField(
                     controller: _instrumentController,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(hintText: '목록에 없으면 직접 입력'),
+                    decoration: const InputDecoration(
+                      hintText: '목록에 없으면 직접 입력',
+                    ),
                     validator: (value) => value == null || value.trim().isEmpty
                         ? '악기 또는 파트를 입력해주세요.'
                         : null,
@@ -193,12 +200,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       setState(() => _mode = selected.first);
                     },
                     style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.resolveWith((states) {
-                        if (states.contains(WidgetState.selected)) return AppColors.primary;
+                      backgroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
+                        if (states.contains(WidgetState.selected)) {
+                          return AppColors.primary;
+                        }
                         return AppColors.surfaceCard;
                       }),
-                      foregroundColor: WidgetStateProperty.resolveWith((states) {
-                        if (states.contains(WidgetState.selected)) return AppColors.onPrimary;
+                      foregroundColor: WidgetStateProperty.resolveWith((
+                        states,
+                      ) {
+                        if (states.contains(WidgetState.selected)) {
+                          return AppColors.onPrimary;
+                        }
                         return AppColors.body;
                       }),
                     ),
@@ -285,7 +300,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               border: Border.all(color: AppColors.hairlineStrong),
             ),
             child: _bandIconFile == null
-                ? const Icon(Icons.add_photo_alternate_outlined, size: 28, color: AppColors.muted)
+                ? const Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 28,
+                    color: AppColors.muted,
+                  )
                 : const Icon(Icons.image, size: 28, color: AppColors.ink),
           ),
         ),
@@ -326,9 +345,6 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.titleSmall,
-    );
+    return Text(text, style: Theme.of(context).textTheme.titleSmall);
   }
 }

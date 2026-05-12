@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_providers.dart';
@@ -68,20 +67,6 @@ class UserRepository {
       },
     );
     return UserProfile.fromJson(res.data!);
-  }
-
-  Future<String> uploadImage({
-    required List<int> bytes,
-    required String filename,
-  }) async {
-    final formData = FormData.fromMap({
-      'file': MultipartFile.fromBytes(bytes, filename: filename),
-    });
-    final res = await _api.dio.post<Map<String, dynamic>>(
-      '/attachments/images',
-      data: formData,
-    );
-    return res.data!['url'] as String;
   }
 }
 
