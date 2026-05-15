@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../auth/models/auth_models.dart';
@@ -50,21 +51,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
     try {
-      await ref.read(userProfileProvider.notifier).saveProfile(
+      await ref
+          .read(userProfileProvider.notifier)
+          .saveProfile(
             name: _nameController.text.trim(),
             instrument: _instrumentController.text.trim(),
           );
       if (mounted) {
         setState(() => _isEditing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('저장되었습니다.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('저장되었습니다.')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('저장 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -179,7 +182,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildReadOnlyProfile(UserProfile profile) {
     final theme = Theme.of(context);
-    final initial = profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?';
+    final initial = profile.name.isNotEmpty
+        ? profile.name[0].toUpperCase()
+        : '?';
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -207,7 +212,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 24),
           Text(
             profile.name,
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           if (profile.instrument?.isNotEmpty == true)
@@ -227,10 +234,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             )
           else
-            Text(
-              '포지션 미정',
-              style: theme.textTheme.bodySmall,
-            ),
+            Text('포지션 미정', style: theme.textTheme.bodySmall),
           const Spacer(),
           SizedBox(
             width: double.infinity,
@@ -238,6 +242,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: ElevatedButton(
               onPressed: () => setState(() => _isEditing = true),
               child: const Text('프로필 변경'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/create_band'),
+              icon: const Icon(Icons.add_circle_outline, size: 16),
+              label: const Text('새 밴드 생성'),
             ),
           ),
           const SizedBox(height: 12),
@@ -258,7 +272,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _buildEditForm(UserProfile profile) {
     final theme = Theme.of(context);
-    final initial = profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?';
+    final initial = profile.name.isNotEmpty
+        ? profile.name[0].toUpperCase()
+        : '?';
 
     return SingleChildScrollView(
       child: Form(
@@ -291,15 +307,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         : null,
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    profile.name,
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text(profile.name, style: theme.textTheme.titleLarge),
                   const SizedBox(height: 4),
-                  Text(
-                    profile.email,
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text(profile.email, style: theme.textTheme.bodySmall),
                 ],
               ),
             ),
@@ -315,14 +325,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(hintText: '닉네임을 입력하세요'),
-                    validator: (v) => v == null || v.trim().isEmpty ? '닉네임을 입력해주세요' : null,
+                    validator: (v) =>
+                        v == null || v.trim().isEmpty ? '닉네임을 입력해주세요' : null,
                   ),
                   const SizedBox(height: 24),
                   Text('밴드 파트', style: theme.textTheme.titleSmall),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _instrumentController,
-                    decoration: const InputDecoration(hintText: '예: Guitar, Vocal'),
+                    decoration: const InputDecoration(
+                      hintText: '예: Guitar, Vocal',
+                    ),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
@@ -333,17 +346,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       separatorBuilder: (_, _) => const SizedBox(width: 8),
                       itemBuilder: (context, index) {
                         final label = _instrumentOptions[index];
-                        final isSelected = _instrumentController.text.trim() == label;
+                        final isSelected =
+                            _instrumentController.text.trim() == label;
                         return GestureDetector(
-                          onTap: () => setState(() => _instrumentController.text = label),
+                          onTap: () => setState(
+                            () => _instrumentController.text = label,
+                          ),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppColors.primary : AppColors.surfaceStrong,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.surfaceStrong,
                               borderRadius: BorderRadius.circular(9999),
                               border: Border.all(
-                                color: isSelected ? AppColors.primary : AppColors.hairlineStrong,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.hairlineStrong,
                               ),
                             ),
                             child: Text(
@@ -351,7 +374,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
-                                color: isSelected ? AppColors.onPrimary : AppColors.body,
+                                color: isSelected
+                                    ? AppColors.onPrimary
+                                    : AppColors.body,
                               ),
                             ),
                           ),

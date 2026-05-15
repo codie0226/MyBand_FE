@@ -18,10 +18,7 @@ class EventRepository {
   }) async {
     final res = await _api.dio.get<List<dynamic>>(
       '/bands/$bandId/events',
-      queryParameters: {
-        'from': ?from,
-        'to': ?to,
-      },
+      queryParameters: {'from': ?from, 'to': ?to},
     );
     return res.data!
         .map((e) => BandEvent.fromJson(e as Map<String, dynamic>))
@@ -39,7 +36,10 @@ class EventRepository {
 
   /// `PATCH /bands/:bandId/events/:eventId` — 일정 수정.
   Future<BandEvent> updateEvent(
-      String bandId, String eventId, BandEvent event) async {
+    String bandId,
+    String eventId,
+    BandEvent event,
+  ) async {
     final res = await _api.dio.patch<Map<String, dynamic>>(
       '/bands/$bandId/events/$eventId',
       data: event.toUpdateJson(),

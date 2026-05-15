@@ -9,7 +9,12 @@ import '../../features/onboarding/views/onboarding_screen.dart';
 import '../../features/profile/providers/user_provider.dart';
 import '../../features/my_band/views/my_band_screen.dart';
 import '../../features/my_band/views/add_event_screen.dart';
+import '../../features/my_band/views/create_band_screen.dart';
+import '../../features/my_band/views/join_band_screen.dart';
+import '../../features/my_band/views/manage_band_members_screen.dart';
+import '../../features/my_band/models/band_models.dart';
 import '../../features/chat/views/chat_screen.dart';
+import '../../features/chat/views/chat_room_list_screen.dart';
 import '../../features/calendar/views/calendar_screen.dart';
 import '../../features/profile/views/profile_screen.dart';
 
@@ -94,6 +99,30 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           return AddEventScreen(preselectedDate: preselectedDate);
         },
       ),
+      GoRoute(
+        path: '/create_band',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CreateBandScreen(),
+      ),
+      GoRoute(
+        path: '/edit_band',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => CreateBandScreen(
+          band: state.extra is Band ? state.extra as Band : null,
+        ),
+      ),
+      GoRoute(
+        path: '/join_band',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const JoinBandScreen(),
+      ),
+      GoRoute(
+        path: '/manage_band_members',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => ManageBandMembersScreen(
+          band: state.extra is Band ? state.extra as Band : null,
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -113,7 +142,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/chat',
-                builder: (context, state) => const ChatScreen(),
+                builder: (context, state) => const ChatRoomListScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':bandId',
+                    builder: (context, state) {
+                      final bandId = state.pathParameters['bandId']!;
+                      final band = state.extra is Band
+                          ? state.extra as Band
+                          : null;
+
+                      return ChatScreen(
+                        bandId: bandId,
+                        bandName: band?.name ?? '채팅방',
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

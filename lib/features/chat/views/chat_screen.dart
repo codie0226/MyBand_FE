@@ -1,10 +1,12 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-import '../../my_band/providers/band_provider.dart';
+import '../../../core/network/attachment_repository.dart';
 import '../../profile/providers/user_provider.dart';
 import '../data/chat_repository.dart';
 import '../models/chat_model.dart';
@@ -12,7 +14,10 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input_bar.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({super.key});
+  final String bandId;
+  final String bandName;
+
+  const ChatScreen({super.key, required this.bandId, required this.bandName});
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -28,6 +33,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   StreamSubscription<ChatMessage>? _messageSubscription;
   bool _isLoadingMessages = false;
   bool _isSending = false;
+  bool _isUploading = false;
   String? _loadError;
 
   @override
@@ -132,6 +138,91 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
+  Future<void> _sendAttachment(ChatAttachment attachment) async {
+    final bandId = _currentBandId;
+    final userId = _currentUserId;
+    if (bandId == null || userId == null || _isSending) return;
+
+    setState(() => _isSending = true);
+    try {
+      final sent = await ref
+          .read(chatRepositoryProvider)
+          .sendMessage(
+            bandId: bandId,
+            currentUserId: userId,
+            attachments: [attachment],
+          );
+      _upsertMessage(sent);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('첨부 전송 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    if (_isUploading) return;
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 88,
+    );
+    if (picked == null) return;
+
+    await _uploadAndSend(
+      bytes: await picked.readAsBytes(),
+      filename: picked.name,
+      uploadType: AttachmentUploadType.image,
+      attachmentType: ChatAttachmentType.image,
+    );
+  }
+
+  Future<void> _pickPdf() async {
+    if (_isUploading) return;
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+      withData: true,
+    );
+    final file = result?.files.single;
+    final bytes = file?.bytes;
+    if (file == null || bytes == null) return;
+
+    await _uploadAndSend(
+      bytes: bytes,
+      filename: file.name,
+      uploadType: AttachmentUploadType.file,
+      attachmentType: ChatAttachmentType.pdf,
+    );
+  }
+
+  Future<void> _uploadAndSend({
+    required List<int> bytes,
+    required String filename,
+    required AttachmentUploadType uploadType,
+    required ChatAttachmentType attachmentType,
+  }) async {
+    setState(() => _isUploading = true);
+    try {
+      final url = await ref
+          .read(attachmentRepositoryProvider)
+          .upload(bytes: bytes, filename: filename, type: uploadType);
+      await _sendAttachment(
+        ChatAttachment(type: attachmentType, url: url, filename: filename),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('업로드 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
   void _upsertMessage(ChatMessage message) {
     if (!mounted) return;
 
@@ -165,50 +256,44 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bandAsync = ref.watch(selectedBandProvider);
     final profileAsync = ref.watch(userProfileProvider);
 
-    return bandAsync.when(
+    return profileAsync.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, st) => Scaffold(body: Center(child: Text('오류: $e'))),
-      data: (selectedBand) => profileAsync.when(
-        loading: () =>
-            const Scaffold(body: Center(child: CircularProgressIndicator())),
-        error: (e, st) =>
-            Scaffold(body: Center(child: Text('프로필을 불러오지 못했습니다: $e'))),
-        data: (profile) {
-          _ensureChatStarted(bandId: selectedBand.id, userId: profile.id);
+      error: (e, st) =>
+          Scaffold(body: Center(child: Text('프로필을 불러오지 못했습니다. $e'))),
+      data: (profile) {
+        _ensureChatStarted(bandId: widget.bandId, userId: profile.id);
 
-          return Scaffold(
-            appBar: AppBar(
-              title: Text('${selectedBand.name} 채팅방'),
-              centerTitle: false,
-            ),
-            body: Column(
-              children: [
-                if (_loadError != null)
-                  Material(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    child: ListTile(
-                      dense: true,
-                      title: Text(_loadError!),
-                      trailing: TextButton(
-                        onPressed: () => _loadChat(
-                          bandId: selectedBand.id,
-                          userId: profile.id,
-                        ),
-                        child: const Text('다시 시도'),
-                      ),
+        return Scaffold(
+          appBar: AppBar(title: Text(widget.bandName), centerTitle: false),
+          body: Column(
+            children: [
+              if (_loadError != null)
+                Material(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: ListTile(
+                    dense: true,
+                    title: Text(_loadError!),
+                    trailing: TextButton(
+                      onPressed: () =>
+                          _loadChat(bandId: widget.bandId, userId: profile.id),
+                      child: const Text('다시 시도'),
                     ),
                   ),
-                Expanded(child: _buildMessageList()),
-                ChatInputBar(onSend: _isSending ? (_) {} : _sendMessage),
-              ],
-            ),
-          );
-        },
-      ),
+                ),
+              Expanded(child: _buildMessageList()),
+              if (_isUploading) const LinearProgressIndicator(minHeight: 2),
+              ChatInputBar(
+                onSend: _isSending ? (_) {} : _sendMessage,
+                onPickImage: _pickImage,
+                onPickPdf: _pickPdf,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

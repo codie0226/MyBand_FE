@@ -5,8 +5,15 @@ import '../models/band_models.dart';
 
 class BandInfoSection extends StatelessWidget {
   final Band band;
+  final bool canEdit;
+  final VoidCallback? onEdit;
 
-  const BandInfoSection({super.key, required this.band});
+  const BandInfoSection({
+    super.key,
+    required this.band,
+    this.canEdit = false,
+    this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +32,11 @@ class BandInfoSection extends StatelessWidget {
                     ? NetworkImage(band.iconUrl!)
                     : null,
                 child: band.iconUrl == null
-                    ? const Icon(Icons.music_note, color: AppColors.ink, size: 20)
+                    ? const Icon(
+                        Icons.music_note,
+                        color: AppColors.ink,
+                        size: 20,
+                      )
                     : null,
               ),
               const SizedBox(width: 12),
@@ -35,13 +46,21 @@ class BandInfoSection extends StatelessWidget {
                   children: [
                     Text(
                       band.name,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     if (band.genre?.isNotEmpty == true)
                       Text(band.genre!, style: theme.textTheme.bodySmall),
                   ],
                 ),
               ),
+              if (canEdit)
+                IconButton(
+                  tooltip: '밴드 정보 수정',
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                ),
             ],
           ),
           const SizedBox(height: 16),
@@ -51,7 +70,10 @@ class BandInfoSection extends StatelessWidget {
             band.description?.isNotEmpty == true
                 ? band.description!
                 : '아직 밴드 소개가 없습니다.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.body, height: 1.6),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.body,
+              height: 1.6,
+            ),
           ),
           if (band.inviteCode?.isNotEmpty == true) ...[
             const SizedBox(height: 16),

@@ -4,8 +4,15 @@ import '../models/band_models.dart';
 
 class MemberListSection extends StatelessWidget {
   final List<Member> members;
+  final bool canManage;
+  final VoidCallback? onManage;
 
-  const MemberListSection({super.key, required this.members});
+  const MemberListSection({
+    super.key,
+    required this.members,
+    this.canManage = false,
+    this.onManage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,9 +21,21 @@ class MemberListSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Text(
-            '밴드 멤버',
-            style: Theme.of(context).textTheme.titleLarge,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '밴드 멤버',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              if (canManage)
+                IconButton(
+                  tooltip: '밴드 멤버 관리',
+                  onPressed: onManage,
+                  icon: const Icon(Icons.manage_accounts_outlined, size: 20),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -43,11 +62,20 @@ class MemberListSection extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     member.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                   Text(
-                    member.instrument ?? '-',
-                    style: const TextStyle(color: AppColors.muted, fontSize: 12, fontWeight: FontWeight.w500),
+                    member.role == BandMemberRole.owner
+                        ? '${member.instrument ?? '-'} · owner'
+                        : member.instrument ?? '-',
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               );

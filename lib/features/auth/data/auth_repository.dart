@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_providers.dart';
 import '../../../core/network/token_storage.dart';
 import '../models/auth_models.dart';
@@ -20,14 +22,17 @@ class AuthRepository {
     String? idToken,
     String? accessToken,
   }) async {
-    assert(idToken != null || accessToken != null,
-        'idToken 또는 accessToken 중 하나는 필수');
+    assert(
+      idToken != null || accessToken != null,
+      'idToken 또는 accessToken 중 하나는 필수',
+    );
+    final data = <String, dynamic>{};
+    if (idToken != null) data['idToken'] = idToken;
+    if (accessToken != null) data['accessToken'] = accessToken;
+
     final res = await _api.dio.post<Map<String, dynamic>>(
       '/auth/google',
-      data: {
-        'idToken': ?idToken,
-        'accessToken': ?accessToken,
-      },
+      data: data,
     );
     final login = LoginResponse.fromJson(res.data!);
     await _tokenStorage.writeAccessToken(login.accessToken);
@@ -55,6 +60,25 @@ class AuthRepository {
   Future<bool> hasStoredToken() async {
     final token = await _tokenStorage.readAccessToken();
     return token != null && token.isNotEmpty;
+  }
+
+  /// 저장된 JWT가 실제로 서버에서 아직 유효한지 확인한다.
+  ///
+  /// 토큰 문자열만 보고 로그인 상태를 복원하면, 백엔드 JWT_SECRET 변경이나
+  /// 만료된 토큰 때문에 첫 보호 API 호출에서 401이 반복될 수 있다.
+  Future<bool> hasValidStoredToken() async {
+    if (!await hasStoredToken()) return false;
+
+    try {
+      await me();
+      return true;
+    } on DioException catch (e) {
+      if (e.error is UnauthorizedException) {
+        await _tokenStorage.clear();
+        return false;
+      }
+      return false;
+    }
   }
 }
 

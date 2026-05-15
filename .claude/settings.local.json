@@ -15,7 +15,8 @@
       "Bash(curl -s http://localhost:3000/docs/swagger-ui-init.js -o c:/Users/CHS/Desktop/MyBand_FE/.swagger-spec.js)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\CHS\\\\Desktop\\\\MyBand_FE\" -Recurse)",
       "Bash(Select-Object FullName)",
-      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\CHS\\\\Desktop\\\\MyBand_FE\\\\lib\" -Recurse | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty FullName | Sort-Object)"
+      "PowerShell(Get-ChildItem -Path \"c:\\\\Users\\\\CHS\\\\Desktop\\\\MyBand_FE\\\\lib\" -Recurse | Where-Object { $_.PSIsContainer } | Select-Object -ExpandProperty FullName | Sort-Object)",
+      "PowerShell(Copy-Item \"c:\\\\Users\\\\CHS\\\\Desktop\\\\MyBand_FE\\\\build\\\\app\\\\outputs\\\\flutter-apk\\\\app-release.apk\" \"c:\\\\Users\\\\CHS\\\\Desktop\\\\MyBand_FE\\\\build\\\\app\\\\outputs\\\\flutter-apk\\\\myband.apk\")"
     ],
     "deny": [
       "Bash(git push origin --force)",

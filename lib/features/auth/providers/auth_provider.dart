@@ -1,13 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../data/auth_repository.dart';
 
 const _webClientId =
-    '321441200947-1lkuu9kt2na6qljhgve9o1h0srk5d0ue.apps.googleusercontent.com'; // TODO: 실제 웹 클라이언트 ID로 교체
+    '321441200947-1lkuu9kt2na6qljhgve9o1h0srk5d0ue.apps.googleusercontent.com';
 
 final _googleSignIn = GoogleSignIn(
-  clientId: _webClientId,
+  clientId: kIsWeb ? _webClientId : null,
+  serverClientId: kIsWeb ? null : _webClientId,
   scopes: const ['openid', 'email', 'profile'],
 );
 
@@ -21,7 +23,7 @@ class AuthNotifier extends Notifier<bool> {
 
   Future<void> _restoreSession() async {
     final repo = ref.read(authRepositoryProvider);
-    if (await repo.hasStoredToken()) {
+    if (await repo.hasValidStoredToken()) {
       state = true;
     }
   }
@@ -60,6 +62,4 @@ class AuthNotifier extends Notifier<bool> {
   }
 }
 
-final authProvider = NotifierProvider<AuthNotifier, bool>(
-  () => AuthNotifier(),
-);
+final authProvider = NotifierProvider<AuthNotifier, bool>(() => AuthNotifier());

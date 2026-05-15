@@ -50,11 +50,16 @@ class ChatRepository {
   Future<ChatMessage> sendMessage({
     required String bandId,
     required String currentUserId,
-    required String text,
+    String text = '',
+    List<ChatAttachment> attachments = const [],
   }) async {
     final res = await _api.dio.post<Map<String, dynamic>>(
       '/bands/$bandId/messages',
-      data: {'text': text},
+      data: {
+        if (text.isNotEmpty) 'text': text,
+        if (attachments.isNotEmpty)
+          'attachments': attachments.map((item) => item.toJson()).toList(),
+      },
     );
 
     return ChatMessage.fromJson(res.data!, currentUserId: currentUserId);

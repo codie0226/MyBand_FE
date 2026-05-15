@@ -4,8 +4,15 @@ import 'attachment_menu.dart';
 
 class ChatInputBar extends StatefulWidget {
   final Function(String) onSend;
+  final VoidCallback onPickImage;
+  final VoidCallback onPickPdf;
 
-  const ChatInputBar({super.key, required this.onSend});
+  const ChatInputBar({
+    super.key,
+    required this.onSend,
+    required this.onPickImage,
+    required this.onPickPdf,
+  });
 
   @override
   State<ChatInputBar> createState() => _ChatInputBarState();
@@ -24,7 +31,10 @@ class _ChatInputBarState extends State<ChatInputBar> {
   void _showAttachmentMenu() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => const AttachmentMenu(),
+      builder: (context) => AttachmentMenu(
+        onPickImage: widget.onPickImage,
+        onPickPdf: widget.onPickPdf,
+      ),
     );
   }
 

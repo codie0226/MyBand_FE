@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../../core/theme/app_theme.dart';
 import '../models/chat_model.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -24,9 +27,7 @@ class ChatBubble extends StatelessWidget {
               children: [
                 _buildTime(context, timeString),
                 const SizedBox(width: 6),
-                Flexible(
-                  child: _buildBubble(context),
-                ),
+                Flexible(child: _buildBubble(context)),
               ],
             )
           : Column(
@@ -45,9 +46,7 @@ class ChatBubble extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: _buildBubble(context),
-                    ),
+                    Flexible(child: _buildBubble(context)),
                     const SizedBox(width: 6),
                     _buildTime(context, timeString),
                   ],
@@ -73,13 +72,27 @@ class ChatBubble extends StatelessWidget {
         ),
         border: isMe ? null : Border.all(color: theme.dividerColor),
       ),
-      child: Text(
-        message.text,
-        style: TextStyle(
-          color: isMe ? theme.colorScheme.onSecondary : theme.colorScheme.onSurface,
-          fontSize: 15,
-          height: 1.4,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.text.isNotEmpty)
+            Text(
+              message.text,
+              style: TextStyle(
+                color: isMe
+                    ? theme.colorScheme.onSecondary
+                    : theme.colorScheme.onSurface,
+                fontSize: 15,
+                height: 1.4,
+              ),
+            ),
+          for (final attachment in message.attachments) ...[
+            if (message.text.isNotEmpty ||
+                attachment != message.attachments.first)
+              const SizedBox(height: 8),
+            _AttachmentPreview(attachment: attachment, isMe: isMe),
+          ],
+        ],
       ),
     );
   }
@@ -87,9 +100,95 @@ class ChatBubble extends StatelessWidget {
   Widget _buildTime(BuildContext context, String time) {
     return Text(
       time,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        fontSize: 11,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+    );
+  }
+}
+
+class _AttachmentPreview extends StatelessWidget {
+  final ChatAttachment attachment;
+  final bool isMe;
+
+  const _AttachmentPreview({required this.attachment, required this.isMe});
+
+  @override
+  Widget build(BuildContext context) {
+    if (attachment.type == ChatAttachmentType.image) {
+      return InkWell(
+        onTap: () => _openImagePreview(context),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.network(
+            attachment.url,
+            width: 180,
+            height: 140,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox(
+              width: 180,
+              height: 96,
+              child: Center(child: Icon(Icons.broken_image_outlined)),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return OutlinedButton.icon(
+      onPressed: () => _launch(attachment.url),
+      icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+      label: Text(attachment.filename, overflow: TextOverflow.ellipsis),
+    );
+  }
+
+  void _openImagePreview(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _ImagePreviewPage(attachment: attachment),
       ),
     );
   }
+}
+
+class _ImagePreviewPage extends StatelessWidget {
+  final ChatAttachment attachment;
+
+  const _ImagePreviewPage({required this.attachment});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text(attachment.filename),
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.black,
+        actions: [
+          IconButton(
+            tooltip: '다운로드',
+            onPressed: () => _launch(attachment.url),
+            icon: const Icon(Icons.download_outlined),
+          ),
+        ],
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4,
+          child: Image.network(
+            attachment.url,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.broken_image_outlined,
+              color: AppColors.onPrimary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _launch(String url) async {
+  final uri = Uri.parse(url);
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }

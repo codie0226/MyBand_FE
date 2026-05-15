@@ -3,11 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../../core/theme/app_theme.dart';
+import '../../my_band/data/event_repository.dart';
 import '../../my_band/models/band_models.dart';
 import '../../my_band/providers/band_provider.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../my_band/widgets/empty_band_actions.dart';
+import '../../my_band/widgets/sheet_music_gallery.dart';
 
 // ─── CalendarScreen ──────────────────────────────────────────────────────────
+
+class CalendarBandEvent {
+  final Band band;
+  final BandEvent event;
+
+  const CalendarBandEvent({required this.band, required this.event});
+}
+
+final allBandEventsProvider = FutureProvider<List<CalendarBandEvent>>((
+  ref,
+) async {
+  final bands = await ref.watch(bandsProvider.future);
+  final repo = ref.read(eventRepositoryProvider);
+  final results = await Future.wait(
+    bands.map((band) async {
+      final events = await repo.getEvents(band.id);
+      return events.map((event) => CalendarBandEvent(band: band, event: event));
+    }),
+  );
+  return results.expand((items) => items).toList();
+});
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -19,22 +43,42 @@ class CalendarScreen extends ConsumerStatefulWidget {
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  final Set<String> _selectedBandIds = {};
 
-  List<BandEvent> _getEventsForDay(DateTime day, List<BandEvent> allEvents) {
+  List<CalendarBandEvent> _filteredEvents(
+    List<CalendarBandEvent> allEvents,
+    List<Band> bands,
+  ) {
+    final effectiveSelected = _selectedBandIds.isEmpty
+        ? bands.map((band) => band.id).toSet()
+        : _selectedBandIds;
     return allEvents
-        .where((e) =>
-            e.date.year == day.year &&
-            e.date.month == day.month &&
-            e.date.day == day.day)
+        .where((entry) => effectiveSelected.contains(entry.band.id))
+        .toList();
+  }
+
+  List<CalendarBandEvent> _getEventsForDay(
+    DateTime day,
+    List<CalendarBandEvent> allEvents,
+  ) {
+    return allEvents
+        .where(
+          (entry) =>
+              entry.event.date.year == day.year &&
+              entry.event.date.month == day.month &&
+              entry.event.date.day == day.day,
+        )
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bandAsync = ref.watch(selectedBandProvider);
+    final bandsAsync = ref.watch(bandsProvider);
+    final eventsAsync = ref.watch(allBandEventsProvider);
 
-    return bandAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+    return bandsAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, st) => Scaffold(
         body: Center(
           child: Column(
@@ -45,44 +89,96 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               Text('불러오기 실패: $e'),
               const SizedBox(height: 16),
               OutlinedButton(
-                onPressed: () => ref.invalidate(selectedBandProvider),
+                onPressed: () => ref.invalidate(bandsProvider),
                 child: const Text('다시 시도'),
               ),
             ],
           ),
         ),
       ),
-      data: (band) {
-        final selectedEvents = _selectedDay != null
-            ? _getEventsForDay(_selectedDay!, band.events)
-            : <BandEvent>[];
+      data: (bands) {
+        if (bands.isEmpty) {
+          return const Scaffold(
+            body: EmptyBandActions(message: '일정을 볼 밴드가 없습니다.'),
+          );
+        }
 
-        return Scaffold(
-          appBar: AppBar(title: Text(band.name), centerTitle: false),
-          body: Column(
-            children: [
-              _buildCalendar(band),
-              const Divider(height: 1, thickness: 1),
-              Expanded(
-                child: _selectedDay == null
-                    ? _buildNoSelection(context)
-                    : _buildEventList(context, selectedEvents),
+        return eventsAsync.when(
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+          error: (e, st) =>
+              Scaffold(body: Center(child: Text('일정을 불러오지 못했습니다: $e'))),
+          data: (allEvents) {
+            final filteredEvents = _filteredEvents(allEvents, bands);
+            final selectedEvents = _selectedDay != null
+                ? _getEventsForDay(_selectedDay!, filteredEvents)
+                : <CalendarBandEvent>[];
+
+            return Scaffold(
+              appBar: AppBar(title: const Text('캘린더'), centerTitle: false),
+              body: Column(
+                children: [
+                  _buildBandFilter(bands),
+                  _buildCalendar(filteredEvents),
+                  const Divider(height: 1, thickness: 1),
+                  Expanded(
+                    child: _selectedDay == null
+                        ? _buildNoSelection(context)
+                        : _buildEventList(context, selectedEvents),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildCalendar(Band band) {
-    return TableCalendar<BandEvent>(
+  Widget _buildBandFilter(List<Band> bands) {
+    return SizedBox(
+      height: 48,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        scrollDirection: Axis.horizontal,
+        itemCount: bands.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final band = bands[index];
+          final selected =
+              _selectedBandIds.isEmpty || _selectedBandIds.contains(band.id);
+          return FilterChip(
+            label: Text(band.name),
+            selected: selected,
+            onSelected: (value) {
+              setState(() {
+                if (_selectedBandIds.isEmpty) {
+                  _selectedBandIds.addAll(bands.map((item) => item.id));
+                }
+                if (value) {
+                  _selectedBandIds.add(band.id);
+                } else {
+                  _selectedBandIds.remove(band.id);
+                }
+                if (_selectedBandIds.length == bands.length) {
+                  _selectedBandIds.clear();
+                }
+              });
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCalendar(List<CalendarBandEvent> events) {
+    return TableCalendar<CalendarBandEvent>(
       firstDay: DateTime.utc(2024, 1, 1),
       lastDay: DateTime.utc(2027, 12, 31),
       focusedDay: _focusedDay,
       locale: 'ko_KR',
       selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-      eventLoader: (day) => _getEventsForDay(day, band.events),
+      eventLoader: (day) => _getEventsForDay(day, events),
       onDaySelected: (selectedDay, focusedDay) {
         setState(() {
           _selectedDay = selectedDay;
@@ -108,13 +204,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       calendarStyle: const CalendarStyle(
         outsideDaysVisible: false,
         todayDecoration: BoxDecoration(
-          border: Border.fromBorderSide(BorderSide(color: AppColors.ink, width: 1.5)),
+          border: Border.fromBorderSide(
+            BorderSide(color: AppColors.ink, width: 1.5),
+          ),
           shape: BoxShape.circle,
         ),
-        todayTextStyle: TextStyle(color: AppColors.ink, fontWeight: FontWeight.w700),
-        selectedDecoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-        selectedTextStyle: TextStyle(color: AppColors.onPrimary, fontWeight: FontWeight.w700),
-        markerDecoration: BoxDecoration(color: AppColors.ink, shape: BoxShape.circle),
+        todayTextStyle: TextStyle(
+          color: AppColors.ink,
+          fontWeight: FontWeight.w700,
+        ),
+        selectedDecoration: BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+        ),
+        selectedTextStyle: TextStyle(
+          color: AppColors.onPrimary,
+          fontWeight: FontWeight.w700,
+        ),
+        markerDecoration: BoxDecoration(
+          color: AppColors.ink,
+          shape: BoxShape.circle,
+        ),
         markerSize: 5.0,
         markersMaxCount: 3,
         markersOffset: PositionedOffset(bottom: 4),
@@ -122,8 +232,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         weekendTextStyle: TextStyle(color: AppColors.ink, letterSpacing: -0.3),
       ),
       daysOfWeekStyle: const DaysOfWeekStyle(
-        weekdayStyle: TextStyle(color: AppColors.body, fontSize: 12, fontWeight: FontWeight.w500),
-        weekendStyle: TextStyle(color: AppColors.body, fontSize: 12, fontWeight: FontWeight.w500),
+        weekdayStyle: TextStyle(
+          color: AppColors.body,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        weekendStyle: TextStyle(
+          color: AppColors.body,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -132,12 +250,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Center(
       child: Text(
         '날짜를 선택하면 일정을 확인할 수 있어요',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.body),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: AppColors.body),
       ),
     );
   }
 
-  Widget _buildEventList(BuildContext context, List<BandEvent> events) {
+  Widget _buildEventList(BuildContext context, List<CalendarBandEvent> events) {
     final day = _selectedDay!;
     final dateLabel = '${day.year}년 ${day.month}월 ${day.day}일';
 
@@ -148,7 +268,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
           child: Text(
             dateLabel,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
         Expanded(
@@ -157,11 +279,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.event_busy_outlined, size: 36, color: AppColors.muted),
+                      const Icon(
+                        Icons.event_busy_outlined,
+                        size: 36,
+                        color: AppColors.muted,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         '등록된 일정이 없습니다.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.body),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: AppColors.body),
                       ),
                     ],
                   ),
@@ -171,14 +299,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   itemCount: events.length,
                   separatorBuilder: (context, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final event = events[index];
+                    final entry = events[index];
+                    final event = entry.event;
                     return Card(
                       margin: EdgeInsets.zero,
                       child: ListTile(
                         onTap: () => _openEventDetail(context, event),
-                        title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        title: Text(
+                          event.title,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                         subtitle: Text(
-                          event.description ?? '',
+                          [
+                            entry.band.name,
+                            if (event.description?.isNotEmpty == true)
+                              event.description!,
+                          ].join(' · '),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodySmall,
@@ -196,7 +332,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             height: 44,
             child: OutlinedButton.icon(
               onPressed: () {
-                final dateStr = _selectedDay!.toIso8601String().split('T').first;
+                final dateStr = _selectedDay!
+                    .toIso8601String()
+                    .split('T')
+                    .first;
                 context.push('/add_event?date=$dateStr');
               },
               icon: const Icon(Icons.add, size: 16),
@@ -213,9 +352,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       PageRouteBuilder(
         pageBuilder: (context, animation, _) => EventDetailPage(event: event),
         transitionsBuilder: (context, animation, _, child) => SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
-            CurvedAnimation(parent: animation, curve: Curves.easeOut),
-          ),
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut)),
           child: child,
         ),
         transitionDuration: const Duration(milliseconds: 300),
@@ -258,7 +398,11 @@ class EventDetailPage extends StatelessWidget {
                 const SizedBox(width: 12),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.body),
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 14,
+                      color: AppColors.body,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '${event.date.year}년 ${event.date.month}월 ${event.date.day}일',
@@ -308,7 +452,10 @@ class EventDetailPage extends StatelessWidget {
                   Text('셋리스트', style: theme.textTheme.titleMedium),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceStrong,
                       borderRadius: BorderRadius.circular(9999),
@@ -328,6 +475,8 @@ class EventDetailPage extends StatelessWidget {
               ...event.setlist.asMap().entries.map((entry) {
                 return _SetlistRow(index: entry.key, item: entry.value);
               }),
+              const SizedBox(height: 24),
+              SheetMusicGallery(setlist: event.setlist),
             ],
           ],
         ),
@@ -387,7 +536,9 @@ class _SetlistRow extends StatelessWidget {
                   children: [
                     Text(
                       item.title,
-                      style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(item.artist, style: theme.textTheme.bodySmall),
                   ],
@@ -396,7 +547,10 @@ class _SetlistRow extends StatelessWidget {
               if (item.key != null) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceStrong,
                     borderRadius: BorderRadius.circular(4),
@@ -420,7 +574,11 @@ class _SetlistRow extends StatelessWidget {
             Row(
               children: [
                 const SizedBox(width: 36),
-                const Icon(Icons.description_outlined, size: 13, color: AppColors.muted),
+                const Icon(
+                  Icons.description_outlined,
+                  size: 13,
+                  color: AppColors.muted,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -438,27 +596,29 @@ class _SetlistRow extends StatelessWidget {
           ],
           if (item.references.isNotEmpty) ...[
             const SizedBox(height: 6),
-            ...item.references.map((ref) => Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 36),
-                      const Icon(Icons.link, size: 13, color: AppColors.muted),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          ref,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            decoration: TextDecoration.underline,
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+            ...item.references.map(
+              (ref) => Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 36),
+                    const Icon(Icons.link, size: 13, color: AppColors.muted),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        ref,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          decoration: TextDecoration.underline,
+                          fontSize: 12,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ],
       ),

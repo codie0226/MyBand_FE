@@ -3,7 +3,14 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 class AttachmentMenu extends StatelessWidget {
-  const AttachmentMenu({super.key});
+  final VoidCallback onPickImage;
+  final VoidCallback onPickPdf;
+
+  const AttachmentMenu({
+    super.key,
+    required this.onPickImage,
+    required this.onPickPdf,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +35,7 @@ class AttachmentMenu extends StatelessWidget {
             label: '이미지',
             onTap: () {
               Navigator.pop(context);
-              // TODO: Implement image picker
+              onPickImage();
             },
           ),
           _buildAttachmentIcon(
@@ -37,7 +44,7 @@ class AttachmentMenu extends StatelessWidget {
             label: '문서 (PDF)',
             onTap: () {
               Navigator.pop(context);
-              // TODO: Implement file picker
+              onPickPdf();
             },
           ),
         ],
