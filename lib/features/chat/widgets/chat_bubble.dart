@@ -159,7 +159,7 @@ class _ImagePreviewPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(attachment.filename),
+        title: _PreviewFilenameLabel(filename: attachment.filename),
         foregroundColor: Colors.white,
         backgroundColor: Colors.black,
         actions: [
@@ -182,6 +182,34 @@ class _ImagePreviewPage extends StatelessWidget {
               color: AppColors.onPrimary,
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviewFilenameLabel extends StatelessWidget {
+  const _PreviewFilenameLabel({required this.filename});
+
+  final String filename;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 220),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        filename,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
