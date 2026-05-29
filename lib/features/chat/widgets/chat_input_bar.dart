@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'attachment_menu.dart';
 
 class ChatInputBar extends StatefulWidget {
@@ -60,8 +59,8 @@ class _ChatInputBarState extends State<ChatInputBar> {
           children: [
             IconButton(
               onPressed: _showAttachmentMenu,
-              icon: FaIcon(
-                FontAwesomeIcons.plus,
+              icon: Icon(
+                Icons.add,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 size: 20,
               ),
@@ -104,8 +103,8 @@ class _ChatInputBarState extends State<ChatInputBar> {
                 backgroundColor: theme.colorScheme.secondary,
                 shape: const CircleBorder(),
               ),
-              icon: FaIcon(
-                FontAwesomeIcons.paperPlane,
+              icon: Icon(
+                Icons.send,
                 color: theme.colorScheme.onSecondary,
                 size: 16,
               ),

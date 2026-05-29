@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:my_band/core/theme/app_theme.dart';
 
 class ScaffoldWithNavBar extends StatelessWidget {
-  const ScaffoldWithNavBar({
-    super.key,
-    required this.navigationShell,
-  });
+  const ScaffoldWithNavBar({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
@@ -27,9 +23,7 @@ class ScaffoldWithNavBar extends StatelessWidget {
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: AppColors.canvas,
-          border: Border(
-            top: BorderSide(color: AppColors.hairline, width: 1),
-          ),
+          border: Border(top: BorderSide(color: AppColors.hairline, width: 1)),
         ),
         child: SafeArea(
           top: false,
@@ -38,25 +32,25 @@ class ScaffoldWithNavBar extends StatelessWidget {
             child: Row(
               children: [
                 _NavItem(
-                  icon: FontAwesomeIcons.guitar,
+                  icon: Icons.library_music_outlined,
                   label: '나의 밴드',
                   selected: current == 0,
                   onTap: () => _goBranch(0),
                 ),
                 _NavItem(
-                  icon: FontAwesomeIcons.solidMessage,
+                  icon: Icons.chat_bubble_outline,
                   label: '채팅',
                   selected: current == 1,
                   onTap: () => _goBranch(1),
                 ),
                 _NavItem(
-                  icon: FontAwesomeIcons.calendar,
+                  icon: Icons.calendar_today_outlined,
                   label: '캘린더',
                   selected: current == 2,
                   onTap: () => _goBranch(2),
                 ),
                 _NavItem(
-                  icon: FontAwesomeIcons.solidUser,
+                  icon: Icons.person_outline,
                   label: '프로필',
                   selected: current == 3,
                   onTap: () => _goBranch(3),
@@ -78,7 +72,7 @@ class _NavItem extends StatelessWidget {
     required this.onTap,
   });
 
-  final FaIconData icon;
+  final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -94,7 +88,7 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            FaIcon(icon, size: 18, color: color),
+            Icon(icon, size: 20, color: color),
             const SizedBox(height: 4),
             Text(
               label,

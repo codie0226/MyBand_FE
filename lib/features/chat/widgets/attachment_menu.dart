@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 
 class AttachmentMenu extends StatelessWidget {
@@ -21,7 +20,7 @@ class AttachmentMenu extends StatelessWidget {
         children: [
           _buildAttachmentIcon(
             context,
-            icon: FontAwesomeIcons.solidCalendarPlus,
+            icon: Icons.event_available_outlined,
             label: '일정 생성',
             onTap: () {
               final router = GoRouter.of(context);
@@ -31,7 +30,7 @@ class AttachmentMenu extends StatelessWidget {
           ),
           _buildAttachmentIcon(
             context,
-            icon: FontAwesomeIcons.image,
+            icon: Icons.image_outlined,
             label: '이미지',
             onTap: () {
               Navigator.pop(context);
@@ -40,7 +39,7 @@ class AttachmentMenu extends StatelessWidget {
           ),
           _buildAttachmentIcon(
             context,
-            icon: FontAwesomeIcons.solidFilePdf,
+            icon: Icons.picture_as_pdf_outlined,
             label: '문서 (PDF)',
             onTap: () {
               Navigator.pop(context);
@@ -54,7 +53,7 @@ class AttachmentMenu extends StatelessWidget {
 
   Widget _buildAttachmentIcon(
     BuildContext context, {
-    required FaIconData icon,
+    required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
@@ -73,7 +72,7 @@ class AttachmentMenu extends StatelessWidget {
               border: Border.all(color: theme.dividerColor),
             ),
             child: Center(
-              child: FaIcon(
+              child: Icon(
                 icon,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                 size: 24,

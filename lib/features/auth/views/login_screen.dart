@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -21,9 +20,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authProvider.notifier).signInWithGoogle();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('로그인 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('로그인 실패: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -42,8 +41,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             children: [
               const Spacer(flex: 3),
               // 앱 아이콘 + 이름
-              const FaIcon(
-                FontAwesomeIcons.guitar,
+              const Icon(
+                Icons.library_music_outlined,
                 size: 48,
                 color: AppColors.ink,
               ),
@@ -51,17 +50,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Text(
                 'MyBand',
                 style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                      letterSpacing: -1.5,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                  letterSpacing: -1.5,
+                ),
               ),
               const SizedBox(height: 10),
               Text(
                 '우리 밴드의 모든 것을 한 곳에서',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.body,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.body),
               ),
               const Spacer(flex: 4),
               // 구글 로그인 버튼
@@ -74,9 +73,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 '로그인하면 서비스 이용약관 및 개인정보처리방침에\n동의하는 것으로 간주됩니다.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.muted,
-                      height: 1.6,
-                    ),
+                  color: AppColors.muted,
+                  height: 1.6,
+                ),
               ),
               const Spacer(flex: 1),
             ],
@@ -91,10 +90,7 @@ class _GoogleSignInButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onPressed;
 
-  const _GoogleSignInButton({
-    required this.isLoading,
-    required this.onPressed,
-  });
+  const _GoogleSignInButton({required this.isLoading, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -106,9 +102,7 @@ class _GoogleSignInButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: AppColors.surfaceCard,
           side: const BorderSide(color: AppColors.hairlineStrong, width: 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: isLoading
             ? const SizedBox(
@@ -122,18 +116,22 @@ class _GoogleSignInButton extends StatelessWidget {
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const FaIcon(
-                    FontAwesomeIcons.google,
-                    size: 16,
-                    color: AppColors.ink,
+                  const Text(
+                    'G',
+                    style: TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'Google로 계속하기',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.ink,
-                        ),
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ],
               ),
