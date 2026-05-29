@@ -5,9 +5,18 @@ import '../models/band_models.dart';
 import 'event_detail_dialog.dart';
 
 class EventListSection extends StatelessWidget {
+  final String bandId;
   final List<BandEvent> events;
+  final bool canDeleteEvents;
+  final VoidCallback? onChanged;
 
-  const EventListSection({super.key, required this.events});
+  const EventListSection({
+    super.key,
+    required this.bandId,
+    required this.events,
+    required this.canDeleteEvents,
+    this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +52,10 @@ class EventListSection extends StatelessWidget {
         if (events.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text('등록된 일정이 없습니다.', style: Theme.of(context).textTheme.bodySmall),
+            child: Text(
+              '등록된 일정이 없습니다.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           )
         else
           ListView.separated(
@@ -57,7 +69,13 @@ class EventListSection extends StatelessWidget {
               final typeLabel = event.type.label;
               return Card(
                 child: ListTile(
-                  onTap: () => EventDetailDialog.show(context, event),
+                  onTap: () => EventDetailDialog.show(
+                    context,
+                    event: event,
+                    bandId: bandId,
+                    canDelete: canDeleteEvents,
+                    onChanged: onChanged,
+                  ),
                   title: Text(
                     event.title,
                     style: const TextStyle(fontWeight: FontWeight.w600),
@@ -67,7 +85,10 @@ class EventListSection extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   trailing: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceStrong,
                       borderRadius: BorderRadius.circular(9999),

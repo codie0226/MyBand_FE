@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../my_band/data/band_member_repository.dart';
 import '../../my_band/data/event_repository.dart';
 import '../../my_band/models/band_models.dart';
 import '../../my_band/providers/band_provider.dart';
+import '../../profile/providers/user_provider.dart';
 import '../../my_band/widgets/empty_band_actions.dart';
 import '../../my_band/widgets/sheet_music_gallery.dart';
 
@@ -23,11 +25,16 @@ final allBandEventsProvider = FutureProvider<List<CalendarBandEvent>>((
   ref,
 ) async {
   final bands = await ref.watch(bandsProvider.future);
-  final repo = ref.read(eventRepositoryProvider);
+  final eventRepo = ref.read(eventRepositoryProvider);
+  final memberRepo = ref.read(bandMemberRepositoryProvider);
   final results = await Future.wait(
     bands.map((band) async {
-      final events = await repo.getEvents(band.id);
-      return events.map((event) => CalendarBandEvent(band: band, event: event));
+      final members = await memberRepo.getMembers(band.id);
+      final events = await eventRepo.getEvents(band.id);
+      final bandWithMembers = band.copyWith(members: members);
+      return events.map(
+        (event) => CalendarBandEvent(band: bandWithMembers, event: event),
+      );
     }),
   );
   return results.expand((items) => items).toList();
@@ -75,6 +82,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final bandsAsync = ref.watch(bandsProvider);
     final eventsAsync = ref.watch(allBandEventsProvider);
+    final currentUserId = ref.watch(userProfileProvider).value?.id;
 
     return bandsAsync.when(
       loading: () =>
@@ -124,7 +132,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Expanded(
                     child: _selectedDay == null
                         ? _buildNoSelection(context)
-                        : _buildEventList(context, selectedEvents),
+                        : _buildEventList(
+                            context,
+                            selectedEvents,
+                            currentUserId: currentUserId,
+                          ),
                   ),
                 ],
               ),
@@ -257,7 +269,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  Widget _buildEventList(BuildContext context, List<CalendarBandEvent> events) {
+  Widget _buildEventList(
+    BuildContext context,
+    List<CalendarBandEvent> events, {
+    required String? currentUserId,
+  }) {
     final day = _selectedDay!;
     final dateLabel = '${day.year}년 ${day.month}월 ${day.day}일';
 
@@ -304,7 +320,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     return Card(
                       margin: EdgeInsets.zero,
                       child: ListTile(
-                        onTap: () => _openEventDetail(context, event),
+                        onTap: () => _openEventDetail(
+                          context,
+                          entry,
+                          currentUserId: currentUserId,
+                        ),
                         title: Text(
                           event.title,
                           style: const TextStyle(fontWeight: FontWeight.w600),
@@ -347,10 +367,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  void _openEventDetail(BuildContext context, BandEvent event) {
+  void _openEventDetail(
+    BuildContext context,
+    CalendarBandEvent entry, {
+    required String? currentUserId,
+  }) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, _) => EventDetailPage(event: event),
+        pageBuilder: (context, animation, _) => EventDetailPage(
+          bandId: entry.band.id,
+          event: entry.event,
+          canDelete: _isOwner(entry.band, currentUserId),
+        ),
         transitionsBuilder: (context, animation, _, child) => SlideTransition(
           position: Tween<Offset>(
             begin: const Offset(0, 1),
@@ -366,16 +394,78 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
 // ─── EventDetailPage ─────────────────────────────────────────────────────────
 
-class EventDetailPage extends StatelessWidget {
-  const EventDetailPage({super.key, required this.event});
+class EventDetailPage extends ConsumerStatefulWidget {
+  const EventDetailPage({
+    super.key,
+    required this.bandId,
+    required this.event,
+    required this.canDelete,
+  });
 
+  final String bandId;
   final BandEvent event;
+  final bool canDelete;
+
+  @override
+  ConsumerState<EventDetailPage> createState() => _EventDetailPageState();
+}
+
+class _EventDetailPageState extends ConsumerState<EventDetailPage> {
+  bool _isDeleting = false;
+
+  Future<void> _deleteEvent() async {
+    if (!widget.canDelete || _isDeleting) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('일정 삭제'),
+        content: const Text('이 일정을 삭제하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              '삭제',
+              style: TextStyle(color: AppColors.semanticError),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+    try {
+      await ref
+          .read(eventRepositoryProvider)
+          .deleteEvent(widget.bandId, widget.event.id);
+      ref.invalidate(allBandEventsProvider);
+      ref.invalidate(selectedBandProvider);
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('일정을 삭제했습니다.')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('일정 삭제 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasSetlist =
-        event.type == EventType.practice || event.type == EventType.performance;
+        widget.event.type == EventType.practice ||
+        widget.event.type == EventType.performance;
 
     return Scaffold(
       appBar: AppBar(
@@ -385,6 +475,23 @@ class EventDetailPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          if (widget.canDelete)
+            IconButton(
+              tooltip: '삭제',
+              onPressed: _isDeleting ? null : _deleteEvent,
+              icon: _isDeleting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(
+                      Icons.delete_outline,
+                      color: AppColors.semanticError,
+                    ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 48),
@@ -394,7 +501,7 @@ class EventDetailPage extends StatelessWidget {
             // 타입 배지 + 날짜
             Row(
               children: [
-                EventTypeBadge(type: event.type, large: true),
+                EventTypeBadge(type: widget.event.type, large: true),
                 const SizedBox(width: 12),
                 Row(
                   children: [
@@ -405,7 +512,7 @@ class EventDetailPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '${event.date.year}년 ${event.date.month}월 ${event.date.day}일',
+                      '${widget.event.date.year}년 ${widget.event.date.month}월 ${widget.event.date.day}일',
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
@@ -416,7 +523,7 @@ class EventDetailPage extends StatelessWidget {
 
             // 제목
             Text(
-              event.title,
+              widget.event.title,
               style: theme.textTheme.displaySmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.8,
@@ -424,7 +531,7 @@ class EventDetailPage extends StatelessWidget {
             ),
 
             // 설명
-            if (event.description?.isNotEmpty == true) ...[
+            if (widget.event.description?.isNotEmpty == true) ...[
               const SizedBox(height: 24),
               Container(
                 width: double.infinity,
@@ -435,7 +542,7 @@ class EventDetailPage extends StatelessWidget {
                   border: Border.all(color: AppColors.hairlineStrong),
                 ),
                 child: Text(
-                  event.description!,
+                  widget.event.description!,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.body,
                     height: 1.7,
@@ -445,7 +552,7 @@ class EventDetailPage extends StatelessWidget {
             ],
 
             // 셋리스트
-            if (hasSetlist && event.setlist.isNotEmpty) ...[
+            if (hasSetlist && widget.event.setlist.isNotEmpty) ...[
               const SizedBox(height: 32),
               Row(
                 children: [
@@ -461,7 +568,7 @@ class EventDetailPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
-                      '${event.setlist.length}곡',
+                      '${widget.event.setlist.length}곡',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -472,17 +579,25 @@ class EventDetailPage extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              ...event.setlist.asMap().entries.map((entry) {
+              ...widget.event.setlist.asMap().entries.map((entry) {
                 return _SetlistRow(index: entry.key, item: entry.value);
               }),
               const SizedBox(height: 24),
-              SheetMusicGallery(setlist: event.setlist),
+              SheetMusicGallery(setlist: widget.event.setlist),
             ],
           ],
         ),
       ),
     );
   }
+}
+
+bool _isOwner(Band band, String? currentUserId) {
+  if (currentUserId == null) return false;
+  return band.members.any(
+    (member) =>
+        member.id == currentUserId && member.role == BandMemberRole.owner,
+  );
 }
 
 // ─── SetlistRow ───────────────────────────────────────────────────────────────

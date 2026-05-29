@@ -1,16 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../data/event_repository.dart';
 import '../models/band_models.dart';
 import 'setlist_item_card.dart';
 import 'sheet_music_gallery.dart';
 
-class EventDetailDialog extends StatelessWidget {
+class EventDetailDialog extends ConsumerStatefulWidget {
   final BandEvent event;
+  final String bandId;
+  final bool canDelete;
+  final VoidCallback? onChanged;
 
-  const EventDetailDialog({super.key, required this.event});
+  const EventDetailDialog({
+    super.key,
+    required this.event,
+    required this.bandId,
+    required this.canDelete,
+    this.onChanged,
+  });
 
-  static void show(BuildContext context, BandEvent event) {
+  static void show(
+    BuildContext context, {
+    required BandEvent event,
+    required String bandId,
+    required bool canDelete,
+    VoidCallback? onChanged,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -18,16 +35,75 @@ class EventDetailDialog extends StatelessWidget {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: EventDetailDialog(event: event),
+        child: EventDetailDialog(
+          event: event,
+          bandId: bandId,
+          canDelete: canDelete,
+          onChanged: onChanged,
+        ),
       ),
     );
+  }
+
+  @override
+  ConsumerState<EventDetailDialog> createState() => _EventDetailDialogState();
+}
+
+class _EventDetailDialogState extends ConsumerState<EventDetailDialog> {
+  bool _isDeleting = false;
+
+  Future<void> _deleteEvent() async {
+    if (!widget.canDelete || _isDeleting) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('일정 삭제'),
+        content: const Text('이 일정을 삭제하시겠어요?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              '삭제',
+              style: TextStyle(color: AppColors.semanticError),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    setState(() => _isDeleting = true);
+    try {
+      await ref
+          .read(eventRepositoryProvider)
+          .deleteEvent(widget.bandId, widget.event.id);
+      widget.onChanged?.call();
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('일정을 삭제했습니다.')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('일정 삭제 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasSetlist =
-        event.type == EventType.practice || event.type == EventType.performance;
+        widget.event.type == EventType.practice ||
+        widget.event.type == EventType.performance;
 
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -58,7 +134,7 @@ class EventDetailDialog extends StatelessWidget {
                       border: Border.all(color: AppColors.hairlineStrong),
                     ),
                     child: Text(
-                      event.type.label,
+                      widget.event.type.label,
                       style: const TextStyle(
                         color: AppColors.ink,
                         fontWeight: FontWeight.w600,
@@ -66,15 +142,37 @@ class EventDetailDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.canDelete)
+                        IconButton(
+                          tooltip: '삭제',
+                          icon: _isDeleting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.semanticError,
+                                ),
+                          onPressed: _isDeleting ? null : _deleteEvent,
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               Text(
-                event.title,
+                widget.event.title,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -89,7 +187,7 @@ class EventDetailDialog extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${event.date.year}년 ${event.date.month}월 ${event.date.day}일',
+                    '${widget.event.date.year}년 ${widget.event.date.month}월 ${widget.event.date.day}일',
                     style: theme.textTheme.bodySmall,
                   ),
                 ],
@@ -97,8 +195,11 @@ class EventDetailDialog extends StatelessWidget {
               const SizedBox(height: 24),
               Text('일정 내용', style: theme.textTheme.titleSmall),
               const SizedBox(height: 8),
-              Text(event.description ?? '', style: theme.textTheme.bodyMedium),
-              if (hasSetlist && event.setlist.isNotEmpty) ...[
+              Text(
+                widget.event.description ?? '',
+                style: theme.textTheme.bodyMedium,
+              ),
+              if (hasSetlist && widget.event.setlist.isNotEmpty) ...[
                 const SizedBox(height: 24),
                 Text('셋리스트', style: theme.textTheme.titleSmall),
                 const SizedBox(height: 8),
@@ -111,7 +212,7 @@ class EventDetailDialog extends StatelessWidget {
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: event.setlist.asMap().entries.map((entry) {
+                    children: widget.event.setlist.asMap().entries.map((entry) {
                       return SetlistItemCard(
                         index: entry.key,
                         item: entry.value,
@@ -120,7 +221,7 @@ class EventDetailDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
-                SheetMusicGallery(setlist: event.setlist),
+                SheetMusicGallery(setlist: widget.event.setlist),
               ],
               const SizedBox(height: 24),
             ],

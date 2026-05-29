@@ -109,7 +109,12 @@ class MyBandScreen extends ConsumerWidget {
                           context.push('/manage_band_members', extra: band),
                     ),
                     const SizedBox(height: 32),
-                    EventListSection(events: band.events),
+                    EventListSection(
+                      bandId: band.id,
+                      events: band.events,
+                      canDeleteEvents: isOwner,
+                      onChanged: () => ref.invalidate(selectedBandProvider),
+                    ),
                     const SizedBox(height: 32),
                     BandInfoSection(
                       band: band,
