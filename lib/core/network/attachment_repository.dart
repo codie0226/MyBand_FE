@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_client.dart';
 import 'api_providers.dart';
+import '../utils/file_signature.dart';
 
 enum AttachmentUploadType { image, file, auto }
 
@@ -16,17 +17,20 @@ class AttachmentRepository {
     required String filename,
     AttachmentUploadType type = AttachmentUploadType.auto,
   }) async {
-    final resolvedType = type == AttachmentUploadType.auto
-        ? _typeFromFilename(filename)
-        : type;
-    final endpoint = resolvedType == AttachmentUploadType.file
+    final verified = validateSafeUploadFile(
+      bytes: bytes,
+      filename: filename,
+      allowImages: type != AttachmentUploadType.file,
+      allowPdf: type != AttachmentUploadType.image,
+    );
+    final endpoint = verified.kind == SafeUploadKind.pdf
         ? '/attachments/files'
         : '/attachments/images';
     final formData = FormData.fromMap({
       'file': MultipartFile.fromBytes(
         bytes,
         filename: filename,
-        contentType: DioMediaType.parse(_mimeTypeFor(filename, resolvedType)),
+        contentType: DioMediaType.parse(verified.mimeType),
       ),
     });
 
@@ -35,38 +39,6 @@ class AttachmentRepository {
       data: formData,
     );
     return res.data!['url'] as String;
-  }
-
-  AttachmentUploadType _typeFromFilename(String filename) {
-    return _extensionOf(filename) == '.pdf'
-        ? AttachmentUploadType.file
-        : AttachmentUploadType.image;
-  }
-
-  String _mimeTypeFor(String filename, AttachmentUploadType type) {
-    final ext = _extensionOf(filename);
-    if (type == AttachmentUploadType.file || ext == '.pdf') {
-      return 'application/pdf';
-    }
-
-    return switch (ext) {
-      '.jpg' || '.jpeg' => 'image/jpeg',
-      '.png' => 'image/png',
-      '.gif' => 'image/gif',
-      '.webp' => 'image/webp',
-      '.bmp' => 'image/bmp',
-      '.svg' => 'image/svg+xml',
-      '.tiff' || '.tif' => 'image/tiff',
-      '.heic' => 'image/heic',
-      '.heif' => 'image/heif',
-      '.avif' => 'image/avif',
-      _ => 'image/jpeg',
-    };
-  }
-
-  String _extensionOf(String filename) {
-    final dot = filename.lastIndexOf('.');
-    return dot >= 0 ? filename.substring(dot).toLowerCase() : '';
   }
 }
 
