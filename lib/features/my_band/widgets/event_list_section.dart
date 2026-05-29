@@ -7,6 +7,7 @@ import 'event_detail_dialog.dart';
 class EventListSection extends StatelessWidget {
   final String bandId;
   final List<BandEvent> events;
+  final String? currentUserId;
   final bool canDeleteEvents;
   final VoidCallback? onChanged;
 
@@ -14,6 +15,7 @@ class EventListSection extends StatelessWidget {
     super.key,
     required this.bandId,
     required this.events,
+    required this.currentUserId,
     required this.canDeleteEvents,
     this.onChanged,
   });
@@ -67,13 +69,29 @@ class EventListSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final event = events[index];
               final typeLabel = event.type.label;
+              final canEdit =
+                  canDeleteEvents ||
+                  (currentUserId != null && event.creatorId == currentUserId);
               return Card(
                 child: ListTile(
                   onTap: () => EventDetailDialog.show(
                     context,
                     event: event,
                     bandId: bandId,
+                    canEdit: canEdit,
                     canDelete: canDeleteEvents,
+                    onEdit: canEdit
+                        ? () async {
+                            final changed = await context.push<bool>(
+                              '/edit_event',
+                              extra: EventFormArgs(
+                                bandId: bandId,
+                                event: event,
+                              ),
+                            );
+                            if (changed == true) onChanged?.call();
+                          }
+                        : null,
                     onChanged: onChanged,
                   ),
                   title: Text(

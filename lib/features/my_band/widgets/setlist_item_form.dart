@@ -4,6 +4,7 @@ import '../../../core/theme/app_theme.dart';
 import '../models/band_models.dart';
 
 class SetlistItemFormData {
+  final String id;
   final titleController = TextEditingController();
   final artistController = TextEditingController();
   final keyController = TextEditingController();
@@ -11,8 +12,36 @@ class SetlistItemFormData {
 
   // 악보 파일 (선택 후 저장 시 업로드)
   PlatformFile? sheetMusicFile;
+  String? existingSheetMusicUrl;
   // 업로드 완료 후 받은 URL (toSetlistItem에서 사용)
   String? uploadedSheetUrl;
+
+  SetlistItemFormData({
+    this.id = '',
+    String title = '',
+    String artist = '',
+    String? key,
+    this.existingSheetMusicUrl,
+    List<String> references = const [],
+  }) {
+    titleController.text = title;
+    artistController.text = artist;
+    keyController.text = key ?? '';
+    referenceControllers.addAll(
+      references.map((value) => TextEditingController(text: value)),
+    );
+  }
+
+  factory SetlistItemFormData.fromSetlistItem(SetlistItem item) {
+    return SetlistItemFormData(
+      id: item.id,
+      title: item.title,
+      artist: item.artist,
+      key: item.key,
+      existingSheetMusicUrl: item.sheetMusicUrl,
+      references: item.references,
+    );
+  }
 
   void dispose() {
     titleController.dispose();
@@ -25,11 +54,13 @@ class SetlistItemFormData {
 
   SetlistItem toSetlistItem(int index) {
     return SetlistItem(
-      id: 'new_s_${DateTime.now().millisecondsSinceEpoch}_$index',
+      id: id.isNotEmpty
+          ? id
+          : 'new_s_${DateTime.now().millisecondsSinceEpoch}_$index',
       title: titleController.text.trim(),
       artist: artistController.text.trim(),
       key: keyController.text.trim().isEmpty ? null : keyController.text.trim(),
-      sheetMusicUrl: uploadedSheetUrl,
+      sheetMusicUrl: uploadedSheetUrl ?? existingSheetMusicUrl,
       references: referenceControllers
           .map((c) => c.text.trim())
           .where((s) => s.isNotEmpty)
@@ -56,7 +87,9 @@ class SetlistItemForm extends StatefulWidget {
 
 class _SetlistItemFormState extends State<SetlistItemForm> {
   void _addReference() {
-    setState(() => widget.data.referenceControllers.add(TextEditingController()));
+    setState(
+      () => widget.data.referenceControllers.add(TextEditingController()),
+    );
   }
 
   void _removeReference(int index) {
@@ -75,6 +108,7 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
     if (result != null && result.files.isNotEmpty) {
       setState(() {
         widget.data.sheetMusicFile = result.files.first;
+        widget.data.existingSheetMusicUrl = null;
         widget.data.uploadedSheetUrl = null; // 새 파일 선택 시 기존 URL 초기화
       });
     }
@@ -83,6 +117,7 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
   void _removeSheetMusic() {
     setState(() {
       widget.data.sheetMusicFile = null;
+      widget.data.existingSheetMusicUrl = null;
       widget.data.uploadedSheetUrl = null;
     });
   }
@@ -91,6 +126,7 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final sheetFile = widget.data.sheetMusicFile;
+    final existingSheetUrl = widget.data.existingSheetMusicUrl;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -102,7 +138,10 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
             // 헤더
             Row(
               children: [
-                Text('곡 ${widget.index + 1}', style: theme.textTheme.titleSmall),
+                Text(
+                  '곡 ${widget.index + 1}',
+                  style: theme.textTheme.titleSmall,
+                ),
                 const Spacer(),
                 IconButton(
                   onPressed: widget.onDelete,
@@ -120,30 +159,43 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
             // 아티스트
             TextFormField(
               controller: widget.data.artistController,
-              decoration: const InputDecoration(labelText: '아티스트명', hintText: '예: 10cm'),
-              validator: (v) => v == null || v.trim().isEmpty ? '아티스트명을 입력해주세요' : null,
+              decoration: const InputDecoration(
+                labelText: '아티스트명',
+                hintText: '예: 10cm',
+              ),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? '아티스트명을 입력해주세요' : null,
             ),
             const SizedBox(height: 12),
 
             // 곡 제목
             TextFormField(
               controller: widget.data.titleController,
-              decoration: const InputDecoration(labelText: '곡 제목', hintText: '예: 스토커'),
-              validator: (v) => v == null || v.trim().isEmpty ? '곡 제목을 입력해주세요' : null,
+              decoration: const InputDecoration(
+                labelText: '곡 제목',
+                hintText: '예: 스토커',
+              ),
+              validator: (v) =>
+                  v == null || v.trim().isEmpty ? '곡 제목을 입력해주세요' : null,
             ),
             const SizedBox(height: 12),
 
             // 키 (조성)
             TextFormField(
               controller: widget.data.keyController,
-              decoration: const InputDecoration(labelText: '키 (조성)', hintText: '예: C Major, Am'),
+              decoration: const InputDecoration(
+                labelText: '키 (조성)',
+                hintText: '예: C Major, Am',
+              ),
             ),
             const SizedBox(height: 16),
 
             // 악보 파일 업로드
             Text(
               '악보 파일',
-              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             if (sheetFile != null)
@@ -152,6 +204,8 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
                 fileSize: sheetFile.size,
                 onRemove: _removeSheetMusic,
               )
+            else if (existingSheetUrl != null)
+              _SheetUrlChip(url: existingSheetUrl, onRemove: _removeSheetMusic)
             else
               _SheetFilePickerButton(onTap: _pickSheetMusic),
 
@@ -159,7 +213,12 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Text('레퍼런스', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  '레퍼런스',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 SizedBox(
                   height: 28,
@@ -181,27 +240,88 @@ class _SetlistItemFormState extends State<SetlistItemForm> {
             ),
             if (widget.data.referenceControllers.isNotEmpty) ...[
               const SizedBox(height: 8),
-              ...widget.data.referenceControllers.asMap().entries.map((entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: TextFormField(
-                      controller: entry.value,
-                      decoration: InputDecoration(
-                        hintText: 'YouTube, Spotify 링크 등',
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        isDense: true,
-                        suffixIcon: IconButton(
-                          onPressed: () => _removeReference(entry.key),
-                          icon: const Icon(Icons.remove_circle_outline, size: 18),
-                          style: IconButton.styleFrom(foregroundColor: AppColors.body),
+              ...widget.data.referenceControllers.asMap().entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextFormField(
+                    controller: entry.value,
+                    decoration: InputDecoration(
+                      hintText: 'YouTube, Spotify 링크 등',
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      isDense: true,
+                      suffixIcon: IconButton(
+                        onPressed: () => _removeReference(entry.key),
+                        icon: const Icon(Icons.remove_circle_outline, size: 18),
+                        style: IconButton.styleFrom(
+                          foregroundColor: AppColors.body,
                         ),
                       ),
-                      keyboardType: TextInputType.url,
-                      style: theme.textTheme.bodySmall,
                     ),
-                  )),
+                    keyboardType: TextInputType.url,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SheetUrlChip extends StatelessWidget {
+  const _SheetUrlChip({required this.url, required this.onRemove});
+
+  final String url;
+  final VoidCallback onRemove;
+
+  String get _filename {
+    final segments = Uri.tryParse(url)?.pathSegments;
+    if (segments == null || segments.isEmpty || segments.last.isEmpty) {
+      return '기존 악보 파일';
+    }
+    return Uri.decodeComponent(segments.last);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceStrong,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.hairlineStrong),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.description_outlined,
+            size: 18,
+            color: AppColors.ink,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _filename,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onRemove,
+            child: const Icon(Icons.close, size: 18, color: AppColors.muted),
+          ),
+        ],
       ),
     );
   }
@@ -229,14 +349,18 @@ class _SheetFilePickerButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.upload_file_outlined, size: 18, color: AppColors.body),
+            const Icon(
+              Icons.upload_file_outlined,
+              size: 18,
+              color: AppColors.body,
+            ),
             const SizedBox(width: 8),
             Text(
               '악보 파일 선택 (PDF, 이미지)',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.body,
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: AppColors.body,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -260,7 +384,9 @@ class _SheetFileChip extends StatelessWidget {
 
   String get _sizeLabel {
     if (fileSize < 1024) return '$fileSize B';
-    if (fileSize < 1024 * 1024) return '${(fileSize / 1024).toStringAsFixed(1)} KB';
+    if (fileSize < 1024 * 1024) {
+      return '${(fileSize / 1024).toStringAsFixed(1)} KB';
+    }
     return '${(fileSize / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
@@ -276,7 +402,11 @@ class _SheetFileChip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.description_outlined, size: 18, color: AppColors.ink),
+          const Icon(
+            Icons.description_outlined,
+            size: 18,
+            color: AppColors.ink,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -285,18 +415,18 @@ class _SheetFileChip extends StatelessWidget {
                 Text(
                   filename,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.ink,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w500,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   _sizeLabel,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.muted,
-                        fontSize: 11,
-                      ),
+                    color: AppColors.muted,
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ),

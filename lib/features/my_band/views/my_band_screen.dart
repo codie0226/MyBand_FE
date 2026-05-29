@@ -112,6 +112,7 @@ class MyBandScreen extends ConsumerWidget {
                     EventListSection(
                       bandId: band.id,
                       events: band.events,
+                      currentUserId: profile?.id,
                       canDeleteEvents: isOwner,
                       onChanged: () => ref.invalidate(selectedBandProvider),
                     ),

@@ -377,6 +377,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         pageBuilder: (context, animation, _) => EventDetailPage(
           bandId: entry.band.id,
           event: entry.event,
+          canEdit: _canEditEvent(entry, currentUserId),
           canDelete: _isOwner(entry.band, currentUserId),
         ),
         transitionsBuilder: (context, animation, _, child) => SlideTransition(
@@ -399,11 +400,13 @@ class EventDetailPage extends ConsumerStatefulWidget {
     super.key,
     required this.bandId,
     required this.event,
+    required this.canEdit,
     required this.canDelete,
   });
 
   final String bandId;
   final BandEvent event;
+  final bool canEdit;
   final bool canDelete;
 
   @override
@@ -460,6 +463,20 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
     }
   }
 
+  Future<void> _editEvent() async {
+    if (!widget.canEdit) return;
+
+    final changed = await context.push<bool>(
+      '/edit_event',
+      extra: EventFormArgs(bandId: widget.bandId, event: widget.event),
+    );
+    if (changed != true) return;
+
+    ref.invalidate(allBandEventsProvider);
+    ref.invalidate(selectedBandProvider);
+    if (mounted) Navigator.of(context).pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -476,6 +493,12 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
+          if (widget.canEdit)
+            IconButton(
+              tooltip: '수정',
+              onPressed: _editEvent,
+              icon: const Icon(Icons.edit_outlined),
+            ),
           if (widget.canDelete)
             IconButton(
               tooltip: '삭제',
@@ -598,6 +621,12 @@ bool _isOwner(Band band, String? currentUserId) {
     (member) =>
         member.id == currentUserId && member.role == BandMemberRole.owner,
   );
+}
+
+bool _canEditEvent(CalendarBandEvent entry, String? currentUserId) {
+  if (currentUserId == null) return false;
+  return _isOwner(entry.band, currentUserId) ||
+      entry.event.creatorId == currentUserId;
 }
 
 // ─── SetlistRow ───────────────────────────────────────────────────────────────

@@ -109,6 +109,7 @@ class BandEvent {
   final EventType type;
   final String? description;
   final List<SetlistItem> setlist;
+  final String? creatorId;
 
   const BandEvent({
     required this.id,
@@ -117,9 +118,11 @@ class BandEvent {
     required this.type,
     this.description,
     this.setlist = const [],
+    this.creatorId,
   });
 
   factory BandEvent.fromJson(Map<String, dynamic> json) {
+    final creator = json['creator'];
     return BandEvent(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -129,6 +132,12 @@ class BandEvent {
       setlist: ((json['setlist'] as List?) ?? const [])
           .map((e) => SetlistItem.fromJson(e as Map<String, dynamic>))
           .toList(),
+      creatorId:
+          json['creatorId'] as String? ??
+          json['createdById'] as String? ??
+          json['createdByUserId'] as String? ??
+          json['userId'] as String? ??
+          (creator is Map<String, dynamic> ? creator['id'] as String? : null),
     );
   }
 
@@ -162,6 +171,7 @@ class BandEvent {
     EventType? type,
     String? description,
     List<SetlistItem>? setlist,
+    String? creatorId,
   }) {
     return BandEvent(
       id: id ?? this.id,
@@ -170,8 +180,16 @@ class BandEvent {
       type: type ?? this.type,
       description: description ?? this.description,
       setlist: setlist ?? this.setlist,
+      creatorId: creatorId ?? this.creatorId,
     );
   }
+}
+
+class EventFormArgs {
+  final String bandId;
+  final BandEvent event;
+
+  const EventFormArgs({required this.bandId, required this.event});
 }
 
 class Band {

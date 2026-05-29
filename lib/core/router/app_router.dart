@@ -100,6 +100,19 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/edit_event',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final args = state.extra is EventFormArgs
+              ? state.extra as EventFormArgs
+              : null;
+          return AddEventScreen(
+            bandId: args?.bandId,
+            initialEvent: args?.event,
+          );
+        },
+      ),
+      GoRoute(
         path: '/create_band',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const CreateBandScreen(),

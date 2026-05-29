@@ -11,8 +11,15 @@ import '../widgets/setlist_item_form.dart';
 
 class AddEventScreen extends ConsumerStatefulWidget {
   final DateTime? preselectedDate;
+  final String? bandId;
+  final BandEvent? initialEvent;
 
-  const AddEventScreen({super.key, this.preselectedDate});
+  const AddEventScreen({
+    super.key,
+    this.preselectedDate,
+    this.bandId,
+    this.initialEvent,
+  });
 
   @override
   ConsumerState<AddEventScreen> createState() => _AddEventScreenState();
@@ -31,7 +38,18 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = widget.preselectedDate;
+    final initialEvent = widget.initialEvent;
+    if (initialEvent != null) {
+      _titleController.text = initialEvent.title;
+      _descriptionController.text = initialEvent.description ?? '';
+      _selectedDate = initialEvent.date;
+      _selectedType = initialEvent.type;
+      _setlistItems.addAll(
+        initialEvent.setlist.map(SetlistItemFormData.fromSetlistItem),
+      );
+    } else {
+      _selectedDate = widget.preselectedDate;
+    }
   }
 
   @override
@@ -117,15 +135,21 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     );
 
     try {
-      final band = await ref.read(selectedBandProvider.future);
-      await ref.read(eventRepositoryProvider).createEvent(band.id, newEvent);
+      final bandId =
+          widget.bandId ?? (await ref.read(selectedBandProvider.future)).id;
+      final eventRepo = ref.read(eventRepositoryProvider);
+      if (widget.initialEvent == null) {
+        await eventRepo.createEvent(bandId, newEvent);
+      } else {
+        await eventRepo.updateEvent(bandId, widget.initialEvent!.id, newEvent);
+      }
       ref.invalidate(selectedBandProvider);
-      if (mounted) context.pop();
+      if (mounted) context.pop(true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('일정 저장 실패: $e')));
+        ).showSnackBar(SnackBar(content: Text('$_actionLabel 실패: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -138,7 +162,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('일정 추가'),
+        title: Text(widget.initialEvent == null ? '일정 추가' : '일정 수정'),
         centerTitle: false,
         actions: [
           if (_isUploading)
@@ -153,8 +177,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
           else
             TextButton(
               onPressed: _saveEvent,
-              child: const Text(
-                '저장',
+              child: Text(
+                widget.initialEvent == null ? '저장' : '수정',
                 style: TextStyle(
                   color: AppColors.ink,
                   fontWeight: FontWeight.w700,
@@ -189,6 +213,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       ),
     );
   }
+
+  String get _actionLabel => widget.initialEvent == null ? '일정 저장' : '일정 수정';
 
   Widget _buildDateField(ThemeData theme) {
     return Column(

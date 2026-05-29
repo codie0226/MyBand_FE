@@ -10,14 +10,18 @@ import 'sheet_music_gallery.dart';
 class EventDetailDialog extends ConsumerStatefulWidget {
   final BandEvent event;
   final String bandId;
+  final bool canEdit;
   final bool canDelete;
+  final Future<void> Function()? onEdit;
   final VoidCallback? onChanged;
 
   const EventDetailDialog({
     super.key,
     required this.event,
     required this.bandId,
+    required this.canEdit,
     required this.canDelete,
+    this.onEdit,
     this.onChanged,
   });
 
@@ -25,7 +29,9 @@ class EventDetailDialog extends ConsumerStatefulWidget {
     BuildContext context, {
     required BandEvent event,
     required String bandId,
+    required bool canEdit,
     required bool canDelete,
+    Future<void> Function()? onEdit,
     VoidCallback? onChanged,
   }) {
     showModalBottomSheet(
@@ -38,7 +44,9 @@ class EventDetailDialog extends ConsumerStatefulWidget {
         child: EventDetailDialog(
           event: event,
           bandId: bandId,
+          canEdit: canEdit,
           canDelete: canDelete,
+          onEdit: onEdit,
           onChanged: onChanged,
         ),
       ),
@@ -98,6 +106,12 @@ class _EventDetailDialogState extends ConsumerState<EventDetailDialog> {
     }
   }
 
+  Future<void> _editEvent() async {
+    if (!widget.canEdit || widget.onEdit == null) return;
+    Navigator.of(context).pop();
+    await widget.onEdit!.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -145,6 +159,12 @@ class _EventDetailDialogState extends ConsumerState<EventDetailDialog> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (widget.canEdit)
+                        IconButton(
+                          tooltip: '수정',
+                          icon: const Icon(Icons.edit_outlined),
+                          onPressed: _editEvent,
+                        ),
                       if (widget.canDelete)
                         IconButton(
                           tooltip: '삭제',
