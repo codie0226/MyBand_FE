@@ -17,12 +17,24 @@ class AuthUser {
   });
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
+    final id = _readString(json, const ['id', 'userId', '_id']);
+    final email = _readString(json, const ['email']);
+    final name =
+        _readString(json, const ['name', 'displayName', 'username']) ??
+        email?.split('@').first ??
+        'User';
+
     return AuthUser(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      nickname: json['nickname'] as String?,
-      email: json['email'] as String,
-      profileImageUrl: json['profileImageUrl'] as String?,
+      id: id ?? email ?? '',
+      name: name,
+      nickname: _readString(json, const ['nickname']),
+      email: email ?? '',
+      profileImageUrl: _readString(json, const [
+        'profileImageUrl',
+        'profile_image_url',
+        'picture',
+        'photoUrl',
+      ]),
       onboardingCompleted: (json['onboardingCompleted'] as bool?) ?? false,
     );
   }
@@ -36,9 +48,25 @@ class LoginResponse {
   const LoginResponse({required this.accessToken, required this.user});
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    final body = _unwrapData(json);
+    final accessToken = _readString(body, const [
+      'accessToken',
+      'access_token',
+      'token',
+      'jwt',
+    ]);
+    final userJson = body['user'] ?? body['member'] ?? body['profile'];
+
+    if (accessToken == null || accessToken.isEmpty) {
+      throw const FormatException('Missing access token in login response.');
+    }
+    if (userJson is! Map<String, dynamic>) {
+      throw const FormatException('Missing user in login response.');
+    }
+
     return LoginResponse(
-      accessToken: json['accessToken'] as String,
-      user: AuthUser.fromJson(json['user'] as Map<String, dynamic>),
+      accessToken: accessToken,
+      user: AuthUser.fromJson(userJson),
     );
   }
 }
@@ -64,14 +92,40 @@ class UserProfile {
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final body = _unwrapData(json);
+    final email = _readString(body, const ['email']);
+    final name =
+        _readString(body, const ['name', 'displayName', 'username']) ??
+        email?.split('@').first ??
+        'User';
+
     return UserProfile(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      name: json['name'] as String,
-      nickname: json['nickname'] as String?,
-      profileImageUrl: json['profileImageUrl'] as String?,
-      instrument: json['instrument'] as String?,
-      onboardingCompleted: (json['onboardingCompleted'] as bool?) ?? false,
+      id: _readString(body, const ['id', 'userId', '_id']) ?? email ?? '',
+      email: email ?? '',
+      name: name,
+      nickname: _readString(body, const ['nickname']),
+      profileImageUrl: _readString(body, const [
+        'profileImageUrl',
+        'profile_image_url',
+        'picture',
+        'photoUrl',
+      ]),
+      instrument: _readString(body, const ['instrument']),
+      onboardingCompleted: (body['onboardingCompleted'] as bool?) ?? false,
     );
   }
+}
+
+Map<String, dynamic> _unwrapData(Map<String, dynamic> json) {
+  final data = json['data'];
+  if (data is Map<String, dynamic>) return data;
+  return json;
+}
+
+String? _readString(Map<String, dynamic> json, List<String> keys) {
+  for (final key in keys) {
+    final value = json[key];
+    if (value is String && value.isNotEmpty) return value;
+  }
+  return null;
 }

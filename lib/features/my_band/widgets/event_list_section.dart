@@ -22,6 +22,8 @@ class EventListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visibleEvents = _eventsWithinFourWeeks(events);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -51,11 +53,11 @@ class EventListSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        if (events.isEmpty)
+        if (visibleEvents.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              '등록된 일정이 없습니다.',
+              '4주 이내에 예정된 일정이 없습니다.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           )
@@ -64,10 +66,10 @@ class EventListSection extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            itemCount: events.length,
+            itemCount: visibleEvents.length,
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
-              final event = events[index];
+              final event = visibleEvents[index];
               final typeLabel = event.type.label;
               final canEdit =
                   canDeleteEvents ||
@@ -129,4 +131,16 @@ class EventListSection extends StatelessWidget {
       ],
     );
   }
+}
+
+List<BandEvent> _eventsWithinFourWeeks(List<BandEvent> events) {
+  final today = DateUtils.dateOnly(DateTime.now());
+  final endDate = today.add(const Duration(days: 28));
+  final visibleEvents = events.where((event) {
+    final eventDate = DateUtils.dateOnly(event.date);
+    return !eventDate.isBefore(today) && !eventDate.isAfter(endDate);
+  }).toList();
+
+  visibleEvents.sort((a, b) => a.date.compareTo(b.date));
+  return visibleEvents;
 }

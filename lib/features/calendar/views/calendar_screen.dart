@@ -50,6 +50,7 @@ class CalendarScreen extends ConsumerStatefulWidget {
 class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
   final Set<String> _selectedBandIds = {};
 
   List<CalendarBandEvent> _filteredEvents(
@@ -127,16 +128,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               body: Column(
                 children: [
                   _buildBandFilter(bands),
-                  _buildCalendar(filteredEvents),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: _buildCalendar(filteredEvents),
+                  ),
                   const Divider(height: 1, thickness: 1),
                   Expanded(
-                    child: _selectedDay == null
-                        ? _buildNoSelection(context)
-                        : _buildEventList(
-                            context,
-                            selectedEvents,
-                            currentUserId: currentUserId,
-                          ),
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: _handleEventListScroll,
+                      child: _selectedDay == null
+                          ? _buildNoSelection(context)
+                          : _buildEventList(
+                              context,
+                              selectedEvents,
+                              currentUserId: currentUserId,
+                            ),
+                    ),
                   ),
                 ],
               ),
@@ -149,9 +158,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Widget _buildBandFilter(List<Band> bands) {
     return SizedBox(
-      height: 48,
+      height: 52,
       child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         scrollDirection: Axis.horizontal,
         itemCount: bands.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
@@ -162,6 +171,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           return FilterChip(
             label: Text(band.name),
             selected: selected,
+            showCheckmark: false,
+            backgroundColor: AppColors.surfaceCard,
+            selectedColor: AppColors.ink,
+            side: BorderSide(
+              color: selected ? AppColors.ink : AppColors.hairlineStrong,
+            ),
+            labelStyle: TextStyle(
+              color: selected ? AppColors.onPrimary : AppColors.ink,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9999),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
             onSelected: (value) {
               setState(() {
                 if (_selectedBandIds.isEmpty) {
@@ -198,8 +222,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         });
       },
       onPageChanged: (focusedDay) => setState(() => _focusedDay = focusedDay),
-      calendarFormat: CalendarFormat.month,
-      availableCalendarFormats: const {CalendarFormat.month: '월'},
+      calendarFormat: _calendarFormat,
+      onFormatChanged: (format) => setState(() => _calendarFormat = format),
+      availableCalendarFormats: const {
+        CalendarFormat.month: '월',
+        CalendarFormat.week: '주',
+      },
       headerStyle: const HeaderStyle(
         titleCentered: true,
         formatButtonVisible: false,
@@ -258,6 +286,25 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
+  bool _handleEventListScroll(ScrollNotification notification) {
+    if (notification is ScrollUpdateNotification) {
+      final delta = notification.scrollDelta ?? 0;
+      if (delta > 8 && _calendarFormat != CalendarFormat.week) {
+        setState(() => _calendarFormat = CalendarFormat.week);
+      } else if (delta < -8 &&
+          notification.metrics.pixels <= 16 &&
+          _calendarFormat != CalendarFormat.month) {
+        setState(() => _calendarFormat = CalendarFormat.month);
+      }
+    } else if (notification is OverscrollNotification &&
+        notification.overscroll < 0 &&
+        _calendarFormat != CalendarFormat.month) {
+      setState(() => _calendarFormat = CalendarFormat.month);
+    }
+
+    return false;
+  }
+
   Widget _buildNoSelection(BuildContext context) {
     return Center(
       child: Text(
@@ -291,26 +338,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
         Expanded(
           child: events.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.event_busy_outlined,
-                        size: 36,
-                        color: AppColors.muted,
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    SizedBox(
+                      height: 220,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.event_busy_outlined,
+                            size: 36,
+                            color: AppColors.muted,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            '등록된 일정이 없습니다.',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.body),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '등록된 일정이 없습니다.',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: AppColors.body),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 )
               : ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: events.length,
                   separatorBuilder: (context, _) => const SizedBox(height: 8),

@@ -1,0 +1,194 @@
+<svg width="1600" height="1180" viewBox="0 0 1600 1180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .tile { fill: #ffffff; stroke: #dcdee0; stroke-width: 1; }
+      .soft { fill: #fafafa; stroke: #f0f0f3; stroke-width: 1; }
+      .ink { fill: #171717; }
+      .muted { fill: #60646c; }
+      .hair { stroke: #dcdee0; stroke-width: 2; }
+      .line { stroke: #171717; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+      .line-sm { stroke: #171717; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+      .line-thin { stroke: #171717; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .sky { fill: #cfe7ff; }
+      .sky2 { fill: #a8c8e8; }
+      .title { font: 600 24px Inter, Arial, sans-serif; fill: #171717; letter-spacing: -0.4px; }
+      .label { font: 600 13px Inter, Arial, sans-serif; fill: #171717; letter-spacing: 0.8px; }
+      .desc { font: 400 13px Inter, Arial, sans-serif; fill: #60646c; }
+      .word { font: 700 28px Inter, Arial, sans-serif; fill: #171717; letter-spacing: -1.2px; }
+      .word-sm { font: 600 22px Inter, Arial, sans-serif; fill: #171717; letter-spacing: -0.8px; }
+      .mono { font: 500 12px "JetBrains Mono", Consolas, monospace; fill: #60646c; }
+    </style>
+    <linearGradient id="skyWash" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#cfe7ff"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+
+  <rect class="bg" width="1600" height="1180"/>
+  <circle cx="230" cy="44" r="180" fill="url(#skyWash)" opacity="0.7"/>
+  <text x="64" y="78" class="title">MyBand logo concepts</text>
+  <text x="64" y="108" class="desc">10 vector-friendly directions based on the current app UI: white canvas, near-black ink, soft hairlines, compact 8-12px geometry.</text>
+
+  <!-- 01 -->
+  <g transform="translate(64 160)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">01 MONOGRAM PICK</text>
+    <g transform="translate(92 72)">
+      <rect class="soft" x="0" y="0" width="96" height="96" rx="20"/>
+      <path class="line" d="M24 70V30L48 58L72 30V70"/>
+      <path class="line-thin" d="M28 76H68"/>
+      <circle class="ink" cx="48" cy="58" r="4"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">M + guitar-pick silhouette</text>
+  </g>
+
+  <!-- 02 -->
+  <g transform="translate(368 160)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">02 SETLIST STACK</text>
+    <g transform="translate(92 72)">
+      <rect class="ink" width="96" height="96" rx="18"/>
+      <rect x="24" y="24" width="48" height="12" rx="3" fill="#ffffff"/>
+      <rect x="24" y="44" width="48" height="12" rx="3" fill="#ffffff" opacity="0.86"/>
+      <rect x="24" y="64" width="32" height="12" rx="3" fill="#ffffff" opacity="0.72"/>
+      <circle cx="66" cy="70" r="4" fill="#cfe7ff"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">setlist, rehearsal order, tasks</text>
+  </g>
+
+  <!-- 03 -->
+  <g transform="translate(672 160)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">03 SOUND WAVE B</text>
+    <g transform="translate(92 72)">
+      <rect class="soft" width="96" height="96" rx="20"/>
+      <path class="line-sm" d="M26 70V26"/>
+      <path class="line-sm" d="M26 26H50C62 26 68 32 68 41C68 50 62 56 50 56H26"/>
+      <path class="line-sm" d="M50 56C62 56 72 61 72 72C72 82 64 88 50 88H26"/>
+      <path class="line-thin" d="M16 48C20 42 20 54 16 48"/>
+      <path class="line-thin" d="M80 35C88 44 88 68 80 77"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">letter B with audio signal</text>
+  </g>
+
+  <!-- 04 -->
+  <g transform="translate(976 160)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">04 MEMBER CIRCLE</text>
+    <g transform="translate(92 72)">
+      <rect class="soft" width="96" height="96" rx="20"/>
+      <circle class="hair" cx="48" cy="48" r="30"/>
+      <circle class="ink" cx="48" cy="18" r="7"/>
+      <circle class="ink" cx="78" cy="48" r="7"/>
+      <circle class="ink" cx="48" cy="78" r="7"/>
+      <circle class="ink" cx="18" cy="48" r="7"/>
+      <path class="line-thin" d="M35 48H61"/>
+      <path class="line-thin" d="M48 35V61"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">members gathered around a beat</text>
+  </g>
+
+  <!-- 05 -->
+  <g transform="translate(1280 160)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">05 GUITAR ROUTE</text>
+    <g transform="translate(92 72)">
+      <rect class="ink" width="96" height="96" rx="20"/>
+      <path d="M30 67C23 60 24 48 32 41C38 35 48 35 54 40L70 24L78 32L62 48C67 54 67 64 60 70C52 78 38 76 30 67Z" fill="#ffffff"/>
+      <path d="M56 44L73 27" stroke="#171717" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="44" cy="56" r="8" fill="#171717"/>
+      <path d="M72 24L80 16" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">instrument-forward app icon</text>
+  </g>
+
+  <!-- 06 -->
+  <g transform="translate(64 480)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">06 CALENDAR BEAT</text>
+    <g transform="translate(92 72)">
+      <rect class="soft" width="96" height="96" rx="20"/>
+      <rect x="24" y="24" width="48" height="48" rx="8" class="hair"/>
+      <path class="line-thin" d="M24 38H72"/>
+      <circle class="ink" cx="38" cy="56" r="4"/>
+      <circle class="ink" cx="50" cy="56" r="4"/>
+      <circle class="ink" cx="62" cy="56" r="4"/>
+      <path class="line-sm" d="M34 18V29M62 18V29"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">schedule and rehearsal rhythm</text>
+  </g>
+
+  <!-- 07 -->
+  <g transform="translate(368 480)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">07 CHAT CHORD</text>
+    <g transform="translate(92 72)">
+      <rect class="soft" width="96" height="96" rx="20"/>
+      <path class="line-sm" d="M24 30H72V62H44L30 76V62H24V30Z"/>
+      <path class="line-thin" d="M38 44L46 54L60 38"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">chat, confirmation, coordination</text>
+  </g>
+
+  <!-- 08 -->
+  <g transform="translate(672 480)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">08 STAGE FRAME</text>
+    <g transform="translate(92 72)">
+      <rect class="ink" width="96" height="96" rx="20"/>
+      <path d="M24 70C30 52 36 42 48 42C60 42 66 52 72 70" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+      <path d="M28 28H68" stroke="#ffffff" stroke-width="7" stroke-linecap="round"/>
+      <path d="M38 28V60M58 28V60" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.88"/>
+      <circle cx="48" cy="42" r="6" fill="#cfe7ff"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">stage, arc, shared performance</text>
+  </g>
+
+  <!-- 09 -->
+  <g transform="translate(976 480)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">09 MB COMPACT</text>
+    <g transform="translate(92 72)">
+      <rect class="soft" width="96" height="96" rx="20"/>
+      <path class="line-sm" d="M18 72V28L36 52L54 28V72"/>
+      <path class="line-sm" d="M54 30H68C76 30 80 35 80 42C80 49 76 54 68 54H54"/>
+      <path class="line-sm" d="M68 54C77 54 83 59 83 68C83 77 77 82 68 82H54"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">cleanest product wordmark path</text>
+  </g>
+
+  <!-- 10 -->
+  <g transform="translate(1280 480)">
+    <rect class="tile" width="280" height="280" rx="12"/>
+    <text x="22" y="38" class="label">10 SKY BADGE</text>
+    <g transform="translate(92 72)">
+      <rect width="96" height="96" rx="20" fill="url(#skyWash)" stroke="#dcdee0"/>
+      <path class="line-sm" d="M28 68V32L48 54L68 32V68"/>
+      <circle class="ink" cx="28" cy="68" r="4"/>
+      <circle class="ink" cx="48" cy="54" r="4"/>
+      <circle class="ink" cx="68" cy="68" r="4"/>
+    </g>
+    <text x="64" y="202" class="word">MyBand</text>
+    <text x="48" y="232" class="desc">soft hero-wash app badge</text>
+  </g>
+
+  <g transform="translate(64 834)">
+    <rect class="soft" width="1496" height="250" rx="12"/>
+    <text x="28" y="44" class="title">Shortlist notes</text>
+    <text x="28" y="78" class="desc">Best app-icon candidates: 01, 02, 05, 09. Best product/nav mark candidates: 01, 03, 09.</text>
+    <text x="28" y="106" class="desc">Most aligned with the current UI: 09 MB Compact. Most musical: 05 Guitar Route. Most collaboration-focused: 04 Member Circle.</text>
+    <text x="28" y="134" class="desc">Recommended direction: combine 09's compact monogram with 01's subtle pick geometry for a final mark that is legible at 18px and still feels musical.</text>
+    <text x="28" y="178" class="mono">Palette: #171717 ink / #ffffff canvas / #dcdee0 hairline / optional #cfe7ff sky wash</text>
+    <text x="28" y="206" class="mono">Shape language: 8-12px UI radius, restrained strokes, no saturated CTA color, no decorative gradients except optional hero-wash badge.</text>
+  </g>
+</svg>

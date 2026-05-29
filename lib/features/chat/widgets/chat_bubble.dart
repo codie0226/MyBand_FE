@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/file_downloader.dart';
 import '../models/chat_model.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -15,7 +16,6 @@ class ChatBubble extends StatelessWidget {
     final isMe = message.isMe;
     final theme = Theme.of(context);
 
-    // Format the time as h:mm a (e.g., 2:30 PM) or suitable Korean format
     final timeString = DateFormat('a h:mm', 'ko_KR').format(message.timestamp);
 
     return Padding(
@@ -163,10 +163,22 @@ class _ImagePreviewPage extends StatelessWidget {
         foregroundColor: Colors.white,
         backgroundColor: Colors.black,
         actions: [
-          IconButton(
-            tooltip: '다운로드',
-            onPressed: () => _launch(attachment.url),
-            icon: const Icon(Icons.download_outlined),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              onPressed: () => downloadFile(
+                attachment.url,
+                filename: attachment.filename,
+              ),
+              icon: const Icon(Icons.download_outlined, size: 18),
+              label: const Text('다운로드'),
+            ),
           ),
         ],
       ),

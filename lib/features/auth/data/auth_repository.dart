@@ -30,11 +30,8 @@ class AuthRepository {
     if (idToken != null) data['idToken'] = idToken;
     if (accessToken != null) data['accessToken'] = accessToken;
 
-    final res = await _api.dio.post<Map<String, dynamic>>(
-      '/auth/google',
-      data: data,
-    );
-    final login = LoginResponse.fromJson(res.data!);
+    final res = await _api.dio.post<dynamic>('/auth/google', data: data);
+    final login = LoginResponse.fromJson(_asJsonMap(res.data, '/auth/google'));
     await _tokenStorage.writeAccessToken(login.accessToken);
     return login;
   }
@@ -52,8 +49,8 @@ class AuthRepository {
 
   /// `GET /auth/me` — 현재 로그인 사용자 프로필.
   Future<UserProfile> me() async {
-    final res = await _api.dio.get<Map<String, dynamic>>('/auth/me');
-    return UserProfile.fromJson(res.data!);
+    final res = await _api.dio.get<dynamic>('/auth/me');
+    return UserProfile.fromJson(_asJsonMap(res.data, '/auth/me'));
   }
 
   /// 저장된 JWT 존재 여부 확인 (앱 시작 시 자동 로그인 판단용).
@@ -87,3 +84,8 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final storage = ref.watch(tokenStorageProvider);
   return AuthRepository(api, storage);
 });
+
+Map<String, dynamic> _asJsonMap(Object? data, String endpoint) {
+  if (data is Map<String, dynamic>) return data;
+  throw ApiException(message: 'Invalid response from $endpoint');
+}

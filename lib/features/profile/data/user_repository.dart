@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_providers.dart';
 import '../../auth/models/auth_models.dart';
@@ -34,8 +35,8 @@ class UserRepository {
 
   /// `GET /users/me`
   Future<UserProfile> getProfile() async {
-    final res = await _api.dio.get<Map<String, dynamic>>('/users/me');
-    return UserProfile.fromJson(res.data!);
+    final res = await _api.dio.get<dynamic>('/users/me');
+    return UserProfile.fromJson(_asJsonMap(res.data, '/users/me'));
   }
 
   /// `PATCH /users/me`
@@ -44,11 +45,11 @@ class UserRepository {
     String? nickname,
     String? instrument,
   }) async {
-    final res = await _api.dio.patch<Map<String, dynamic>>(
+    final res = await _api.dio.patch<dynamic>(
       '/users/me',
       data: {'name': ?name, 'nickname': ?nickname, 'instrument': ?instrument},
     );
-    return UserProfile.fromJson(res.data!);
+    return UserProfile.fromJson(_asJsonMap(res.data, '/users/me'));
   }
 
   Future<UserProfile> completeOnboarding({
@@ -57,7 +58,7 @@ class UserRepository {
     String? inviteCode,
     OnboardingBandInput? band,
   }) async {
-    final res = await _api.dio.post<Map<String, dynamic>>(
+    final res = await _api.dio.post<dynamic>(
       '/users/me/onboarding',
       data: {
         'nickname': nickname,
@@ -66,10 +67,15 @@ class UserRepository {
         if (band != null) 'band': band.toJson(),
       },
     );
-    return UserProfile.fromJson(res.data!);
+    return UserProfile.fromJson(_asJsonMap(res.data, '/users/me/onboarding'));
   }
 }
 
 final userRepositoryProvider = Provider<UserRepository>((ref) {
   return UserRepository(ref.watch(apiClientProvider));
 });
+
+Map<String, dynamic> _asJsonMap(Object? data, String endpoint) {
+  if (data is Map<String, dynamic>) return data;
+  throw ApiException(message: 'Invalid response from $endpoint');
+}

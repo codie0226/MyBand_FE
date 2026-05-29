@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/file_downloader.dart';
 import '../models/band_models.dart';
 
 class SheetMusicGallery extends StatelessWidget {
@@ -205,10 +205,19 @@ class _SheetMusicPreviewPageState extends State<_SheetMusicPreviewPage> {
         foregroundColor: Colors.white,
         title: Text('${_currentIndex + 1} / ${widget.images.length}'),
         actions: [
-          IconButton(
-            tooltip: '다운로드',
-            onPressed: () => _download(current.url),
-            icon: const Icon(Icons.download),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              onPressed: () => _download(current),
+              icon: const Icon(Icons.download_outlined, size: 18),
+              label: const Text('다운로드'),
+            ),
           ),
         ],
       ),
@@ -288,9 +297,8 @@ class _SheetMusicPreviewPageState extends State<_SheetMusicPreviewPage> {
     );
   }
 
-  Future<void> _download(String url) async {
-    final uri = Uri.parse(url);
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  Future<void> _download(_SheetMusicImage image) async {
+    await downloadFile(image.url, filename: image.filename);
   }
 }
 
@@ -306,6 +314,11 @@ class _SheetMusicImage {
   final String title;
   final String artist;
   final int setlistIndex;
+
+  String get filename {
+    final extension = _extensionFromUrl(url);
+    return _safeFilename('$title-$artist$extension');
+  }
 }
 
 List<_SheetMusicImage> _sheetMusicImages(List<SetlistItem> setlist) {
@@ -338,4 +351,16 @@ bool _isImageUrl(String url) {
       path.endsWith('.heic') ||
       path.endsWith('.heif') ||
       path.endsWith('.avif');
+}
+
+String _extensionFromUrl(String url) {
+  final path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
+  final dotIndex = path.lastIndexOf('.');
+  if (dotIndex == -1 || dotIndex == path.length - 1) return '';
+  return path.substring(dotIndex);
+}
+
+String _safeFilename(String filename) {
+  final sanitized = filename.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
+  return sanitized.isEmpty ? 'sheet-music' : sanitized;
 }
