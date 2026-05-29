@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/network/attachment_repository.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../chat/data/chat_repository.dart';
+import '../../profile/providers/user_provider.dart';
 import '../models/band_models.dart';
 import '../data/event_repository.dart';
 import '../providers/band_provider.dart';
@@ -138,13 +140,25 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       final bandId =
           widget.bandId ?? (await ref.read(selectedBandProvider.future)).id;
       final eventRepo = ref.read(eventRepositoryProvider);
+      String? announcementWarning;
       if (widget.initialEvent == null) {
-        await eventRepo.createEvent(bandId, newEvent);
+        final createdEvent = await eventRepo.createEvent(bandId, newEvent);
+        announcementWarning = await _sendEventAnnouncement(
+          bandId,
+          createdEvent,
+        );
       } else {
         await eventRepo.updateEvent(bandId, widget.initialEvent!.id, newEvent);
       }
       ref.invalidate(selectedBandProvider);
-      if (mounted) context.pop(true);
+      if (mounted) {
+        if (announcementWarning != null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(announcementWarning)));
+        }
+        context.pop(true);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -215,6 +229,40 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
   }
 
   String get _actionLabel => widget.initialEvent == null ? '일정 저장' : '일정 수정';
+
+  Future<String?> _sendEventAnnouncement(String bandId, BandEvent event) async {
+    try {
+      final profile =
+          ref.read(userProfileProvider).asData?.value ??
+          await ref.read(userProfileProvider.future);
+      if (profile == null) {
+        return '일정은 저장됐지만 프로필 정보를 확인하지 못해 채팅 알림을 보내지 못했습니다.';
+      }
+      await ref
+          .read(chatRepositoryProvider)
+          .sendMessage(
+            bandId: bandId,
+            currentUserId: profile.id,
+            text: _eventAnnouncementText(event),
+          );
+      return null;
+    } catch (e) {
+      return '일정은 저장됐지만 채팅 알림 전송에 실패했습니다: $e';
+    }
+  }
+
+  String _eventAnnouncementText(BandEvent event) {
+    final date = '${event.date.year}년 ${event.date.month}월 ${event.date.day}일';
+    final lines = [
+      '[새 일정] ${event.title}',
+      '종류: ${event.type.label}',
+      '날짜: $date',
+      if (event.description?.trim().isNotEmpty == true)
+        '내용: ${event.description!.trim()}',
+      if (event.setlist.isNotEmpty) '셋리스트: ${event.setlist.length}곡',
+    ];
+    return lines.join('\n');
+  }
 
   Widget _buildDateField(ThemeData theme) {
     return Column(
