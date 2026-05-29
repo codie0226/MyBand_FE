@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/models/auth_models.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../my_band/data/band_repository.dart';
+import '../../my_band/providers/band_provider.dart';
 import '../providers/user_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -18,8 +20,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _instrumentController = TextEditingController();
+  final _inviteCodeController = TextEditingController();
   bool _isSaving = false;
   bool _isEditing = false;
+  bool _isJoiningBand = false;
 
   static const _instrumentOptions = [
     'Vocal',
@@ -35,6 +39,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _instrumentController.dispose();
+    _inviteCodeController.dispose();
     super.dispose();
   }
 
@@ -102,6 +107,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ref.read(authProvider.notifier).signOut();
       }
     });
+  }
+
+  Future<void> _joinBandByInviteCode() async {
+    final inviteCode = _inviteCodeController.text.trim();
+    if (inviteCode.isEmpty || _isJoiningBand) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('초대 코드를 입력해주세요.')));
+      return;
+    }
+
+    setState(() => _isJoiningBand = true);
+    try {
+      final band = await ref
+          .read(bandRepositoryProvider)
+          .joinByInviteCode(inviteCode);
+      _inviteCodeController.clear();
+      ref.invalidate(bandsProvider);
+      ref.read(selectedBandIdProvider.notifier).select(band.id);
+      ref.invalidate(selectedBandProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('${band.name} 밴드에 가입했습니다.')));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('밴드 가입 실패: $e')));
+    } finally {
+      if (mounted) setState(() => _isJoiningBand = false);
+    }
   }
 
   @override
@@ -186,56 +223,64 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ? profile.name[0].toUpperCase()
         : '?';
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(24),
         children: [
           const SizedBox(height: 40),
-          CircleAvatar(
-            radius: 60,
-            backgroundColor: AppColors.surfaceStrong,
-            backgroundImage: profile.profileImageUrl != null
-                ? NetworkImage(profile.profileImageUrl!)
-                : null,
-            child: profile.profileImageUrl == null
-                ? Text(
-                    initial,
-                    style: const TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            profile.name,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          if (profile.instrument?.isNotEmpty == true)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceStrong,
-                borderRadius: BorderRadius.circular(9999),
+          Column(
+            children: [
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: AppColors.surfaceStrong,
+                backgroundImage: profile.profileImageUrl != null
+                    ? NetworkImage(profile.profileImageUrl!)
+                    : null,
+                child: profile.profileImageUrl == null
+                    ? Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      )
+                    : null,
               ),
-              child: Text(
-                profile.instrument!,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.ink,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
+              const SizedBox(height: 24),
+              Text(
+                profile.name,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            )
-          else
-            Text('포지션 미정', style: theme.textTheme.bodySmall),
-          const Spacer(),
+              const SizedBox(height: 6),
+              if (profile.instrument?.isNotEmpty == true)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceStrong,
+                    borderRadius: BorderRadius.circular(9999),
+                  ),
+                  child: Text(
+                    profile.instrument!,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.ink,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                )
+              else
+                Text('포지션 미정', style: theme.textTheme.bodySmall),
+            ],
+          ),
+          const SizedBox(height: 36),
+          _buildInviteCodeJoinSection(theme),
+          const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             height: 48,
@@ -265,6 +310,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInviteCodeJoinSection(ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.canvasSoft,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.hairlineStrong),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('다른 밴드 가입', style: theme.textTheme.titleSmall),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _inviteCodeController,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(hintText: '초대 코드'),
+            onSubmitted: (_) => _joinBandByInviteCode(),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 44,
+            child: OutlinedButton.icon(
+              onPressed: _isJoiningBand ? null : _joinBandByInviteCode,
+              icon: _isJoiningBand
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.group_add_outlined, size: 16),
+              label: const Text('초대 코드로 가입'),
+            ),
+          ),
         ],
       ),
     );
