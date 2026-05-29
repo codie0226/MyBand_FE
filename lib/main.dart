@@ -7,11 +7,7 @@ import 'core/router/app_router.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ko_KR', null);
-  runApp(
-    const ProviderScope(
-      child: MyBandApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyBandApp()));
 }
 
 class MyBandApp extends ConsumerWidget {
@@ -25,6 +21,9 @@ class MyBandApp extends ConsumerWidget {
       title: 'MyBand',
       theme: AppTheme.lightTheme,
       routerConfig: goRouter,
+      builder: (context, child) {
+        return SelectionArea(child: child ?? const SizedBox.shrink());
+      },
     );
   }
 }
