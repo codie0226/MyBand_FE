@@ -3,7 +3,7 @@ services:
     build:
       context: .
       args:
-        API_BASE_URL: ${API_BASE_URL:-http://pagomnini.kro.kr}
+        API_BASE_URL: ${API_BASE_URL:-https://pagomnini.kro.kr}
     ports:
       - "${PORT:-80}:80"
     restart: unless-stopped

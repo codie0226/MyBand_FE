@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -39,6 +41,18 @@ class AttachmentRepository {
       data: formData,
     );
     return res.data!['url'] as String;
+  }
+
+  Future<Uint8List> fetchBytes(String attachmentUrl) async {
+    final res = await _api.dio.get<List<int>>(
+      attachmentUrl,
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final bytes = res.data;
+    if (bytes == null || bytes.isEmpty) {
+      throw StateError('Attachment response was empty');
+    }
+    return Uint8List.fromList(bytes);
   }
 }
 

@@ -71,15 +71,15 @@ class ChatRepository {
       throw StateError('로그인이 필요합니다.');
     }
 
-    final base = Uri.parse(AppConfig.apiBaseUrl);
-    final scheme = base.scheme == 'https' ? 'wss' : 'ws';
-    final uri = base.replace(
-      scheme: scheme,
-      path: '/bands/$bandId/chat',
-      queryParameters: {'token': token},
+    final uri = buildChatWebSocketUri(
+      apiBaseUrl: AppConfig.apiBaseUrl,
+      bandId: bandId,
     );
 
-    return WebSocketChannel.connect(uri);
+    return WebSocketChannel.connect(
+      uri,
+      protocols: buildChatWebSocketProtocols(token),
+    );
   }
 
   Stream<ChatMessage> messageStream({
@@ -104,3 +104,22 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
     ref.watch(tokenStorageProvider),
   );
 });
+
+Uri buildChatWebSocketUri({
+  required String apiBaseUrl,
+  required String bandId,
+}) {
+  final base = Uri.parse(apiBaseUrl);
+  final scheme = base.scheme == 'https' ? 'wss' : 'ws';
+  return Uri(
+    scheme: scheme,
+    userInfo: base.userInfo,
+    host: base.host,
+    port: base.hasPort ? base.port : null,
+    path: '/bands/$bandId/chat',
+  );
+}
+
+List<String> buildChatWebSocketProtocols(String jwt) {
+  return ['bearer', jwt];
+}

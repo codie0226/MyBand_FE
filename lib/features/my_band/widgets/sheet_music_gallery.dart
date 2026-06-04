@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/file_downloader.dart';
+import '../../../core/widgets/authenticated_image.dart';
 import '../models/band_models.dart';
 
 class SheetMusicGallery extends StatelessWidget {
@@ -98,8 +99,8 @@ class _SheetMusicTile extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              Image.network(
-                image.url,
+              AuthenticatedImage(
+                url: image.url,
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const Center(
                   child: Icon(
@@ -234,8 +235,8 @@ class _SheetMusicPreviewPageState extends State<_SheetMusicPreviewPage> {
                   minScale: 0.8,
                   maxScale: 4,
                   child: Center(
-                    child: Image.network(
-                      image.url,
+                    child: AuthenticatedImage(
+                      url: image.url,
                       fit: BoxFit.contain,
                       errorBuilder: (_, _, _) => const Icon(
                         Icons.broken_image_outlined,

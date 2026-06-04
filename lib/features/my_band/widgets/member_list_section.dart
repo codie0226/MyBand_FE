@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/authenticated_image.dart';
 import '../models/band_models.dart';
 
 class MemberListSection extends StatelessWidget {
@@ -50,14 +52,10 @@ class MemberListSection extends StatelessWidget {
               final member = members[index];
               return Column(
                 children: [
-                  CircleAvatar(
+                  AuthenticatedAvatar(
                     radius: 30,
-                    backgroundImage: member.profileImageUrl != null
-                        ? NetworkImage(member.profileImageUrl!)
-                        : null,
-                    child: member.profileImageUrl == null
-                        ? Text(member.name.isNotEmpty ? member.name[0] : '?')
-                        : null,
+                    imageUrl: member.profileImageUrl,
+                    child: Text(member.name.isNotEmpty ? member.name[0] : '?'),
                   ),
                   const SizedBox(height: 8),
                   Text(

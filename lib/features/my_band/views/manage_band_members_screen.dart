@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/authenticated_image.dart';
 import '../data/band_member_repository.dart';
 import '../models/band_models.dart';
 import '../providers/band_provider.dart';
@@ -45,13 +46,10 @@ class _MemberManager extends ConsumerWidget {
         final isOwner = member.role == BandMemberRole.owner;
         return ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: CircleAvatar(
-            backgroundImage: member.profileImageUrl != null
-                ? NetworkImage(member.profileImageUrl!)
-                : null,
-            child: member.profileImageUrl == null
-                ? Text(member.name.isNotEmpty ? member.name[0] : '?')
-                : null,
+          leading: AuthenticatedAvatar(
+            radius: 20,
+            imageUrl: member.profileImageUrl,
+            child: Text(member.name.isNotEmpty ? member.name[0] : '?'),
           ),
           title: Text(member.name),
           subtitle: Text(

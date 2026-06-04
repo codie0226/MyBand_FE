@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/authenticated_image.dart';
 import '../models/band_models.dart';
 
 class BandInfoSection extends StatelessWidget {
@@ -25,19 +26,15 @@ class BandInfoSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
+              AuthenticatedAvatar(
                 radius: 24,
+                imageUrl: band.iconUrl,
                 backgroundColor: AppColors.surfaceStrong,
-                backgroundImage: band.iconUrl != null
-                    ? NetworkImage(band.iconUrl!)
-                    : null,
-                child: band.iconUrl == null
-                    ? const Icon(
-                        Icons.music_note,
-                        color: AppColors.ink,
-                        size: 20,
-                      )
-                    : null,
+                child: const Icon(
+                  Icons.music_note,
+                  color: AppColors.ink,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

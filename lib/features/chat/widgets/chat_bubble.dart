@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/file_downloader.dart';
+import '../../../core/widgets/authenticated_image.dart';
 import '../models/chat_model.dart';
 
 class ChatBubble extends StatelessWidget {
@@ -118,8 +118,8 @@ class _AttachmentPreview extends StatelessWidget {
         onTap: () => _openImagePreview(context),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            attachment.url,
+          child: AuthenticatedImage(
+            url: attachment.url,
             width: 180,
             height: 140,
             fit: BoxFit.cover,
@@ -134,7 +134,8 @@ class _AttachmentPreview extends StatelessWidget {
     }
 
     return OutlinedButton.icon(
-      onPressed: () => _launch(attachment.url),
+      onPressed: () =>
+          downloadFile(attachment.url, filename: attachment.filename),
       icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
       label: Text(attachment.filename, overflow: TextOverflow.ellipsis),
     );
@@ -172,10 +173,8 @@ class _ImagePreviewPage extends StatelessWidget {
                 minimumSize: const Size(0, 36),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
-              onPressed: () => downloadFile(
-                attachment.url,
-                filename: attachment.filename,
-              ),
+              onPressed: () =>
+                  downloadFile(attachment.url, filename: attachment.filename),
               icon: const Icon(Icons.download_outlined, size: 18),
               label: const Text('다운로드'),
             ),
@@ -186,8 +185,8 @@ class _ImagePreviewPage extends StatelessWidget {
         child: InteractiveViewer(
           minScale: 0.5,
           maxScale: 4,
-          child: Image.network(
-            attachment.url,
+          child: AuthenticatedImage(
+            url: attachment.url,
             fit: BoxFit.contain,
             errorBuilder: (_, _, _) => const Icon(
               Icons.broken_image_outlined,
@@ -226,9 +225,4 @@ class _PreviewFilenameLabel extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _launch(String url) async {
-  final uri = Uri.parse(url);
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/authenticated_image.dart';
 import '../../my_band/models/band_models.dart';
 import '../../my_band/providers/band_provider.dart';
 import '../../my_band/widgets/empty_band_actions.dart';
@@ -70,18 +71,14 @@ class _ChatRoomTile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              CircleAvatar(
+              AuthenticatedAvatar(
                 radius: 24,
+                imageUrl: band.iconUrl,
                 backgroundColor: AppColors.surfaceStrong,
-                backgroundImage: band.iconUrl != null
-                    ? NetworkImage(band.iconUrl!)
-                    : null,
-                child: band.iconUrl == null
-                    ? Text(
-                        band.name.isNotEmpty ? band.name[0] : '?',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      )
-                    : null,
+                child: Text(
+                  band.name.isNotEmpty ? band.name[0] : '?',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

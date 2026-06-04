@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/authenticated_image.dart';
 import '../../auth/models/auth_models.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../my_band/data/band_repository.dart';
@@ -230,22 +231,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 40),
           Column(
             children: [
-              CircleAvatar(
+              AuthenticatedAvatar(
                 radius: 60,
+                imageUrl: profile.profileImageUrl,
                 backgroundColor: AppColors.surfaceStrong,
-                backgroundImage: profile.profileImageUrl != null
-                    ? NetworkImage(profile.profileImageUrl!)
-                    : null,
-                child: profile.profileImageUrl == null
-                    ? Text(
-                        initial,
-                        style: const TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                        ),
-                      )
-                    : null,
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -374,22 +371,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               color: AppColors.canvasSoft,
               child: Column(
                 children: [
-                  CircleAvatar(
+                  AuthenticatedAvatar(
                     radius: 48,
+                    imageUrl: profile.profileImageUrl,
                     backgroundColor: AppColors.surfaceStrong,
-                    backgroundImage: profile.profileImageUrl != null
-                        ? NetworkImage(profile.profileImageUrl!)
-                        : null,
-                    child: profile.profileImageUrl == null
-                        ? Text(
-                            initial,
-                            style: const TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.ink,
-                            ),
-                          )
-                        : null,
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Text(profile.name, style: theme.textTheme.titleLarge),
