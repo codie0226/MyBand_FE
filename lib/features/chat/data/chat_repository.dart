@@ -116,7 +116,7 @@ Uri buildChatWebSocketUri({
     userInfo: base.userInfo,
     host: base.host,
     port: base.hasPort ? base.port : null,
-    path: '/bands/$bandId/chat',
+    path: '/api/bands/$bandId/chat',
   );
 }
 

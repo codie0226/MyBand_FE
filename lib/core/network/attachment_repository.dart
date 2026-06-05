@@ -5,14 +5,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'api_client.dart';
 import 'api_providers.dart';
+import 'token_storage.dart';
 import '../utils/file_signature.dart';
 
 enum AttachmentUploadType { image, file, auto }
 
 class AttachmentRepository {
   final ApiClient _api;
+  final TokenStorage _tokenStorage;
 
-  AttachmentRepository(this._api);
+  AttachmentRepository(this._api, this._tokenStorage);
 
   Future<String> upload({
     required List<int> bytes,
@@ -36,9 +38,17 @@ class AttachmentRepository {
       ),
     });
 
+    final token = await _tokenStorage.readAccessToken();
     final res = await _api.dio.post<Map<String, dynamic>>(
       endpoint,
       data: formData,
+      options: Options(
+        contentType: 'multipart/form-data',
+        headers: {
+          if (token != null && token.isNotEmpty)
+            'Authorization': 'Bearer $token',
+        },
+      ),
     );
     return res.data!['url'] as String;
   }
@@ -57,5 +67,8 @@ class AttachmentRepository {
 }
 
 final attachmentRepositoryProvider = Provider<AttachmentRepository>((ref) {
-  return AttachmentRepository(ref.watch(apiClientProvider));
+  return AttachmentRepository(
+    ref.watch(apiClientProvider),
+    ref.watch(tokenStorageProvider),
+  );
 });
