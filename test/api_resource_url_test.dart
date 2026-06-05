@@ -43,4 +43,30 @@ void main() {
       isFalse,
     );
   });
+
+  test('adds an attachment filename hint without changing the resource path', () {
+    final url = withAttachmentFilenameHint(
+      'https://api.example.com/api/attachments/att-1',
+      'score.png',
+    );
+
+    expect(
+      url,
+      'https://api.example.com/api/attachments/att-1?filename=score.png',
+    );
+    expect(attachmentFilenameHint(url), 'score.png');
+  });
+
+  test('preserves existing query parameters when adding a filename hint', () {
+    final url = withAttachmentFilenameHint(
+      'https://api.example.com/api/attachments/att-1?token=abc',
+      'score one.png',
+    );
+
+    expect(
+      url,
+      'https://api.example.com/api/attachments/att-1?token=abc&filename=score+one.png',
+    );
+    expect(attachmentFilenameHint(url), 'score one.png');
+  });
 }

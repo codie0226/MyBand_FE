@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/network/api_resource_url.dart';
 import '../../../core/network/attachment_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../chat/data/chat_repository.dart';
@@ -101,11 +102,12 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       for (final item in _setlistItems) {
         final file = item.sheetMusicFile;
         if (file != null && file.bytes != null) {
-          item.uploadedSheetUrl = await repo.upload(
+          final url = await repo.upload(
             bytes: file.bytes!,
             filename: file.name,
             type: AttachmentUploadType.auto,
           );
+          item.uploadedSheetUrl = withAttachmentFilenameHint(url, file.name);
         }
       }
     } catch (e) {

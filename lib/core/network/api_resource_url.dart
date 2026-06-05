@@ -19,6 +19,27 @@ bool isApiResourceUrl(String url, {String apiBaseUrl = AppConfig.apiBaseUrl}) {
       _effectivePort(uri) == _effectivePort(base);
 }
 
+Uri withQueryParameter(Uri uri, String key, String value) {
+  return uri.replace(
+    queryParameters: {
+      ...uri.queryParameters,
+      key: value,
+    },
+  );
+}
+
+String withAttachmentFilenameHint(String url, String filename) {
+  final uri = Uri.parse(url);
+  return withQueryParameter(uri, 'filename', filename).toString();
+}
+
+String? attachmentFilenameHint(String url) {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return null;
+  final filename = uri.queryParameters['filename'];
+  return filename == null || filename.trim().isEmpty ? null : filename;
+}
+
 int? _effectivePort(Uri uri) {
   if (uri.hasPort) return uri.port;
   return switch (uri.scheme.toLowerCase()) {

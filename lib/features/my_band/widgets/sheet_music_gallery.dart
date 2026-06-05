@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/network/api_resource_url.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/file_downloader.dart';
 import '../../../core/widgets/authenticated_image.dart';
@@ -340,28 +341,42 @@ List<_SheetMusicImage> _sheetMusicImages(List<SetlistItem> setlist) {
 }
 
 bool _isImageUrl(String url) {
-  final path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
-  return path.endsWith('.jpg') ||
-      path.endsWith('.jpeg') ||
-      path.endsWith('.png') ||
-      path.endsWith('.gif') ||
-      path.endsWith('.webp') ||
-      path.endsWith('.bmp') ||
-      path.endsWith('.svg') ||
-      path.endsWith('.tiff') ||
-      path.endsWith('.heic') ||
-      path.endsWith('.heif') ||
-      path.endsWith('.avif');
+  return _imageExtensions.contains(_extensionFromUrl(url));
 }
 
 String _extensionFromUrl(String url) {
-  final path = Uri.tryParse(url)?.path.toLowerCase() ?? url.toLowerCase();
-  final dotIndex = path.lastIndexOf('.');
-  if (dotIndex == -1 || dotIndex == path.length - 1) return '';
-  return path.substring(dotIndex);
+  final uri = Uri.tryParse(url);
+  final filenameHint = attachmentFilenameHint(url);
+  final candidates = [
+    if (filenameHint != null) filenameHint,
+    if (uri != null && uri.pathSegments.isNotEmpty) uri.pathSegments.last,
+    url,
+  ];
+
+  for (final candidate in candidates) {
+    final lower = candidate.toLowerCase();
+    final dotIndex = lower.lastIndexOf('.');
+    if (dotIndex != -1 && dotIndex < lower.length - 1) {
+      return lower.substring(dotIndex);
+    }
+  }
+  return '';
 }
 
 String _safeFilename(String filename) {
   final sanitized = filename.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
   return sanitized.isEmpty ? 'sheet-music' : sanitized;
 }
+
+const _imageExtensions = {
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.webp',
+  '.bmp',
+  '.tiff',
+  '.heic',
+  '.heif',
+  '.avif',
+};
