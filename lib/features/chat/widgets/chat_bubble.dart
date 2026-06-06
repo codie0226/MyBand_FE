@@ -137,106 +137,118 @@ class _EventAnnouncementCard extends StatelessWidget {
         ? '내용 없음'
         : announcement.description;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 240,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: isMe ? Colors.white : AppColors.canvasSoft,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isMe
-                  ? Colors.white.withValues(alpha: 0.72)
-                  : AppColors.hairlineStrong,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.event_available_outlined,
-                    size: 18,
-                    color: isMe ? AppColors.ink : theme.colorScheme.primary,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardMaxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth.clamp(0.0, 240.0).toDouble()
+            : 240.0;
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: cardMaxWidth),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isMe ? Colors.white : AppColors.canvasSoft,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isMe
+                        ? Colors.white.withValues(alpha: 0.72)
+                        : AppColors.hairlineStrong,
                   ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '새 일정',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: AppColors.body,
-                        fontWeight: FontWeight.w700,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.event_available_outlined,
+                          size: 18,
+                          color: isMe
+                              ? AppColors.ink
+                              : theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '새 일정',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: AppColors.body,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: AppColors.muted,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      announcement.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    size: 18,
-                    color: AppColors.muted,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                announcement.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: AppColors.ink,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.calendar_today_outlined,
-                    size: 13,
-                    color: AppColors.muted,
-                  ),
-                  const SizedBox(width: 5),
-                  Expanded(
-                    child: Text(
-                      date,
-                      maxLines: 1,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_outlined,
+                          size: 13,
+                          color: AppColors.muted,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            date,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.body,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.body,
-                        fontWeight: FontWeight.w600,
+                        height: 1.35,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.body,
-                  height: 1.35,
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _EventChip(label: announcement.typeLabel),
+                        if (announcement.setlistCount > 0)
+                          _EventChip(label: '${announcement.setlistCount}곡'),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _EventChip(label: announcement.typeLabel),
-                  if (announcement.setlistCount > 0)
-                    _EventChip(label: '${announcement.setlistCount}곡'),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

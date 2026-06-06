@@ -8,6 +8,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../core/network/attachment_repository.dart';
 import '../../calendar/views/calendar_screen.dart';
+import '../../my_band/data/band_member_repository.dart';
+import '../../my_band/data/event_repository.dart';
 import '../../my_band/models/band_models.dart';
 import '../../profile/providers/user_provider.dart';
 import '../data/chat_repository.dart';
@@ -246,13 +248,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   ) async {
     final currentUserId = _currentUserId;
     try {
-      ref.invalidate(allBandEventsProvider);
-      final entries = await ref.read(allBandEventsProvider.future);
-      CalendarBandEvent? target;
-      for (final entry in entries) {
-        if (entry.band.id == widget.bandId &&
-            entry.event.id == announcement.eventId) {
-          target = entry;
+      final results = await Future.wait([
+        ref.read(eventRepositoryProvider).getEvents(widget.bandId),
+        ref.read(bandMemberRepositoryProvider).getMembers(widget.bandId),
+      ]);
+      final events = results[0] as List<BandEvent>;
+      final members = results[1] as List<Member>;
+
+      BandEvent? target;
+      for (final event in events) {
+        if (event.id == announcement.eventId) {
+          target = event;
           break;
         }
       }
@@ -264,7 +270,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         );
         return;
       }
-      final targetEntry = target;
+      final band = Band(
+        id: widget.bandId,
+        name: widget.bandName,
+        members: members,
+      );
+      final targetEntry = CalendarBandEvent(band: band, event: target);
 
       Navigator.of(context).push(
         PageRouteBuilder(
