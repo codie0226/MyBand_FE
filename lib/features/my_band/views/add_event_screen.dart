@@ -6,6 +6,7 @@ import '../../../core/network/api_resource_url.dart';
 import '../../../core/network/attachment_repository.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../chat/data/chat_repository.dart';
+import '../../chat/models/chat_event_announcement.dart';
 import '../../profile/providers/user_provider.dart';
 import '../models/band_models.dart';
 import '../data/event_repository.dart';
@@ -245,25 +246,12 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
           .sendMessage(
             bandId: bandId,
             currentUserId: profile.id,
-            text: _eventAnnouncementText(event),
+            text: ChatEventAnnouncement.fromEvent(event).toMessageText(),
           );
       return null;
     } catch (e) {
       return '일정은 저장됐지만 채팅 알림 전송에 실패했습니다: $e';
     }
-  }
-
-  String _eventAnnouncementText(BandEvent event) {
-    final date = '${event.date.year}년 ${event.date.month}월 ${event.date.day}일';
-    final lines = [
-      '[새 일정] ${event.title}',
-      '종류: ${event.type.label}',
-      '날짜: $date',
-      if (event.description?.trim().isNotEmpty == true)
-        '내용: ${event.description!.trim()}',
-      if (event.setlist.isNotEmpty) '셋리스트: ${event.setlist.length}곡',
-    ];
-    return lines.join('\n');
   }
 
   Widget _buildDateField(ThemeData theme) {

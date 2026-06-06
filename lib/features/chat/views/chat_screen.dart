@@ -7,8 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../core/network/attachment_repository.dart';
+import '../../calendar/views/calendar_screen.dart';
+import '../../my_band/models/band_models.dart';
 import '../../profile/providers/user_provider.dart';
 import '../data/chat_repository.dart';
+import '../models/chat_event_announcement.dart';
 import '../models/chat_model.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/chat_input_bar.dart';
@@ -238,6 +241,60 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _scrollToBottom();
   }
 
+  Future<void> _openEventAnnouncement(
+    ChatEventAnnouncement announcement,
+  ) async {
+    final currentUserId = _currentUserId;
+    try {
+      ref.invalidate(allBandEventsProvider);
+      final entries = await ref.read(allBandEventsProvider.future);
+      CalendarBandEvent? target;
+      for (final entry in entries) {
+        if (entry.band.id == widget.bandId &&
+            entry.event.id == announcement.eventId) {
+          target = entry;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+      if (target == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('일정을 찾을 수 없습니다.')),
+        );
+        return;
+      }
+      final targetEntry = target;
+
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, _) => EventDetailPage(
+            bandId: targetEntry.band.id,
+            event: targetEntry.event,
+            canEdit: _canEditEventFromChat(targetEntry, currentUserId),
+            canDelete: _isOwnerFromChat(targetEntry.band, currentUserId),
+          ),
+          transitionsBuilder: (context, animation, _, child) =>
+              SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                ),
+                child: child,
+              ),
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('일정 상세를 열 수 없습니다: $e')));
+    }
+  }
+
   void _scrollToBottom({bool jump = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_scrollController.hasClients) return;
@@ -313,7 +370,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       itemBuilder: (context, index) {
         final message = _messages[index];
         final previousMessage = index > 0 ? _messages[index - 1] : null;
-        final bubble = ChatBubble(message: message);
+        final bubble = ChatBubble(
+          message: message,
+          onOpenEvent: _openEventAnnouncement,
+        );
 
         if (!_shouldShowDateSeparator(message, previousMessage)) {
           return bubble;
@@ -339,6 +399,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final previousDate = DateUtils.dateOnly(previousMessage.timestamp);
     return currentDate != previousDate;
   }
+}
+
+bool _isOwnerFromChat(Band band, String? currentUserId) {
+  if (currentUserId == null) return false;
+  return band.members.any(
+    (member) =>
+        member.id == currentUserId && member.role == BandMemberRole.owner,
+  );
+}
+
+bool _canEditEventFromChat(CalendarBandEvent entry, String? currentUserId) {
+  if (currentUserId == null) return false;
+  return _isOwnerFromChat(entry.band, currentUserId) ||
+      entry.event.creatorId == currentUserId;
 }
 
 class _DateSeparator extends StatelessWidget {

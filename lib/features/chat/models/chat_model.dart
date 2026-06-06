@@ -1,3 +1,5 @@
+import 'chat_event_announcement.dart';
+
 enum ChatAttachmentType {
   image('image'),
   pdf('pdf');
@@ -43,6 +45,7 @@ class ChatMessage {
   final String senderName;
   final String? senderProfileImageUrl;
   final String text;
+  final ChatEventAnnouncement? eventAnnouncement;
   final List<ChatAttachment> attachments;
   final bool isMe;
   final DateTime timestamp;
@@ -53,6 +56,7 @@ class ChatMessage {
     required this.senderName,
     this.senderProfileImageUrl,
     required this.text,
+    this.eventAnnouncement,
     this.attachments = const [],
     required this.isMe,
     required this.timestamp,
@@ -64,12 +68,14 @@ class ChatMessage {
   }) {
     final senderId = json['senderId'] as String;
 
+    final text = json['text'] as String;
     return ChatMessage(
       id: json['id'] as String,
       senderId: senderId,
       senderName: json['senderName'] as String,
       senderProfileImageUrl: json['senderProfileImageUrl'] as String?,
-      text: json['text'] as String,
+      text: text,
+      eventAnnouncement: ChatEventAnnouncement.tryParse(text),
       attachments: ((json['attachments'] as List?) ?? const [])
           .map((item) => ChatAttachment.fromJson(item as Map<String, dynamic>))
           .toList(),
