@@ -1,0 +1,9 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">MyBand MB Pulse logo</title>
+  <desc id="desc">A white M with three sky-blue beat markers on a rounded black square.</desc>
+  <rect width="512" height="512" rx="120" fill="#171717"/>
+  <path d="M116 368V152L256 296L396 152V368" stroke="#FFFFFF" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="116" cy="368" r="22" fill="#CFE7FF"/>
+  <circle cx="256" cy="296" r="22" fill="#CFE7FF"/>
+  <circle cx="396" cy="368" r="22" fill="#CFE7FF"/>
+</svg>

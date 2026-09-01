@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/brand_logo.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -40,12 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Spacer(flex: 3),
-              // 앱 아이콘 + 이름
-              const Icon(
-                Icons.library_music_outlined,
-                size: 48,
-                color: AppColors.ink,
-              ),
+              const BrandLogo(key: Key('login-brand-logo'), size: 88),
               const SizedBox(height: 20),
               Text(
                 'MyBand',
